@@ -31,7 +31,7 @@ export function PanelStage({ children }: { children: ReactNode }) {
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-cover bg-bottom bg-no-repeat opacity-40"
-        style={{ backgroundImage: "url('/images/desert-hero.png')" }}
+        style={{ backgroundImage: "url('/images/desert-hero.webp')" }}
       />
       <div
         aria-hidden="true"

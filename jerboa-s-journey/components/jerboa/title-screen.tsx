@@ -42,7 +42,7 @@ export function TitleScreen() {
       <div
         aria-hidden="true"
         className="absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: "url('/images/desert-hero.png')" }}
+        style={{ backgroundImage: "url('/images/desert-hero.webp')" }}
       />
       <div
         aria-hidden="true"
@@ -59,7 +59,7 @@ export function TitleScreen() {
             className="absolute bottom-3 left-1/2 h-4 w-40 -translate-x-1/2 rounded-[50%] bg-foreground/25 blur-md md:w-52"
           />
           <img
-            src="/images/jerboa.png"
+            src="/images/jerboa.webp"
             alt="Jerboa, a friendly long-eared desert rodent, standing and ready for adventure"
             className="jerboa-cutout relative w-64 md:w-80"
           />

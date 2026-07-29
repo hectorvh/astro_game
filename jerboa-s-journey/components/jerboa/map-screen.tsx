@@ -29,7 +29,7 @@ export function MapScreen() {
       <div
         aria-hidden="true"
         className="absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: "url('/images/map-terrain.png')" }}
+        style={{ backgroundImage: "url('/images/map-terrain.webp')" }}
       />
       <div aria-hidden="true" className="absolute inset-0 bg-background/10" />
 
@@ -123,7 +123,7 @@ export function MapScreen() {
       <div className="pointer-events-none absolute inset-0 z-10">
         <Marker x={10} y={72}>
           <img
-            src="/images/jerboa.png"
+            src="/images/jerboa.webp"
             alt="Jerboa waiting at the start of the trail"
             className="jerboa-cutout w-20 animate-bob drop-shadow-[0_12px_12px_rgba(63,47,30,0.3)] sm:w-24"
           />
