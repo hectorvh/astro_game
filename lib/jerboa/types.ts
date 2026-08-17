@@ -39,3 +39,16 @@ export interface ConsentRecord {
   agreed: boolean
   timestamp: string
 }
+
+/** One mini-game trial stored in `data` (spec §4.2). */
+export interface TrialRecord {
+  id: string
+  userId: string
+  minigame: string
+  spatialCategory: 'topological' | 'motion' | 'projective' | 'distance'
+  stimulusId: string
+  response: unknown
+  isCorrect: boolean | null
+  responseTimeMs: number | null
+  timestamp: string
+}

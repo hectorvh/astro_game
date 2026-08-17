@@ -12,6 +12,7 @@ import { ConsentScreen } from './consent-screen'
 import { DeclinedScreen } from './declined-screen'
 import { TitleScreen } from './title-screen'
 import { MapScreen } from './map-screen'
+import { MinigameOneScreen } from './minigame-one-screen'
 
 function CurrentScreen() {
   const { step, participant, credentials } = useSession()
@@ -71,6 +72,8 @@ function CurrentScreen() {
       return <TitleScreen />
     case 'map':
       return <MapScreen />
+    case 'minigame1':
+      return <MinigameOneScreen />
     default:
       return null
   }

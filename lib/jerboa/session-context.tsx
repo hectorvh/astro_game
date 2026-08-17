@@ -27,6 +27,7 @@ export type Step =
   | 'consent'
   | 'title'
   | 'map'
+  | 'minigame1'
   | 'declined'
 
 export const STEP_ORDER: Step[] = [

@@ -53,7 +53,6 @@ export function WelcomeScreen() {
         >
           <UserPlus className="size-6" />
           Sign In
-          <ArrowRight className="size-6" />
         </button>
       </div>
 

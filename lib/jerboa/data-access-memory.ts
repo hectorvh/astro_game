@@ -1,5 +1,5 @@
-import type { AuthSession, ConsentRecord, ParticipantRecord } from './types'
-import type { CreateAccountInput, Credentials, OnboardingValues } from './schema'
+import type { AuthSession, ConsentRecord, ParticipantRecord, TrialRecord } from './types'
+import type { CreateAccountInput, Credentials, OnboardingValues, TrialInput } from './schema'
 
 // Prototype backend: keeps records in memory and logs writes, so every screen
 // and navigation rule can be exercised without a database. Deliberately has no
@@ -8,10 +8,12 @@ import type { CreateAccountInput, Credentials, OnboardingValues } from './schema
 const store = {
   participants: new Map<string, ParticipantRecord>(),
   consents: [] as ConsentRecord[],
+  trials: [] as TrialRecord[],
   users: new Map<
     string,
     { userid: string; password: string; userId: string }
   >(),
+  currentUserId: null as string | null,
 }
 
 function uuid(): string {
@@ -87,6 +89,7 @@ export async function createAccount(
     password: input.password,
     userId: record.id,
   })
+  store.currentUserId = record.id
   await recordConsent(record.id, input.consentVersion, true)
   console.log('[jerboa] account INSERT', { userid: input.userid, id: record.id })
   return { userid: input.userid, participant: record, consentGiven: true }
@@ -97,10 +100,33 @@ export async function logIn(credentials: Credentials): Promise<AuthSession> {
   if (!account || account.password !== credentials.password) {
     throw new Error('User ID or password is not correct.')
   }
+  store.currentUserId = account.userId
   const participant = store.participants.get(account.userId) ?? null
   return {
     userid: account.userid,
     participant,
     consentGiven: Boolean(participant),
   }
+}
+
+export async function recordTrial(input: TrialInput): Promise<TrialRecord> {
+  const userId = store.currentUserId
+  if (!userId) {
+    throw new Error('Please log in again to save your answers.')
+  }
+
+  const record: TrialRecord = {
+    id: uuid(),
+    userId,
+    minigame: input.minigame,
+    spatialCategory: input.spatialCategory,
+    stimulusId: input.stimulusId,
+    response: input.response,
+    isCorrect: input.isCorrect,
+    responseTimeMs: input.responseTimeMs,
+    timestamp: new Date().toISOString(),
+  }
+  store.trials.push(record)
+  console.log('[jerboa] trial INSERT', record)
+  return record
 }

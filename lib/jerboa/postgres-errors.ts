@@ -7,7 +7,7 @@ const FRIENDLY: ReadonlyArray<readonly [RegExp, string]> = [
   [/users_name_length/i, 'That name is a little too long.'],
   [/user_languages_user_id_language_key/i,
     'Each language can only be added once.'],
-  [/unknown participant/i,
+  [/unknown participant|not authenticated|Please log in again/i,
     'Please log in again to save your answers.'],
   [/users_userid_lower_idx|users_userid_format|duplicate key.*users/i,
     'That user ID is already taken. Please choose another.'],

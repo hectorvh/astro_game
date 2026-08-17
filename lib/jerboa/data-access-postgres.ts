@@ -1,5 +1,5 @@
-import type { AuthSession, ConsentRecord, ParticipantRecord } from './types'
-import type { CreateAccountInput, Credentials, OnboardingValues } from './schema'
+import type { AuthSession, ConsentRecord, ParticipantRecord, TrialRecord } from './types'
+import type { CreateAccountInput, Credentials, OnboardingValues, TrialInput } from './schema'
 
 // Browser half of the local-Postgres backend. Talks to Next.js route handlers
 // which hold DATABASE_URL and write through the Unix socket. The participant
@@ -69,4 +69,8 @@ export async function createAccount(
 
 export async function logIn(credentials: Credentials): Promise<AuthSession> {
   return postJson<AuthSession>('/api/auth/login', credentials)
+}
+
+export async function recordTrial(input: TrialInput): Promise<TrialRecord> {
+  return postJson<TrialRecord>('/api/trials', input)
 }

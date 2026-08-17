@@ -97,7 +97,9 @@ export function MapScreen() {
           <Marker key={node.id} x={node.x} y={node.y}>
             <button
               type="button"
-              onClick={() => setActive(node.id)}
+              onClick={() =>
+                node.id === 1 ? goTo('minigame1') : setActive(node.id)
+              }
               className="pointer-events-auto group flex flex-col items-center gap-1"
               aria-label={`Stop ${node.id}: ${node.label}`}
             >

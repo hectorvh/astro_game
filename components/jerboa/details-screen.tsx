@@ -1,6 +1,6 @@
 'use client'
 
-import { Controller, useForm } from 'react-hook-form'
+import { Controller, useForm, type DefaultValues } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
   ArrowLeft,
@@ -51,8 +51,8 @@ export function DetailsScreen({ mode }: { mode: 'signup' | 'settings' }) {
       ? profileFromParticipant(participant)
       : {
           name: draft?.name ?? '',
-          ageRange: draft?.ageRange ?? undefined,
-          gender: draft?.gender ?? undefined,
+          ageRange: (draft?.ageRange ?? '') as OnboardingValues['ageRange'],
+          gender: (draft?.gender ?? '') as OnboardingValues['gender'],
           genderOther: draft?.genderOther ?? '',
           country: draft?.country ?? '',
           uiLanguage: draft?.uiLanguage ?? 'en',
@@ -71,7 +71,7 @@ export function DetailsScreen({ mode }: { mode: 'signup' | 'settings' }) {
   } = useForm<OnboardingValues>({
     resolver: zodResolver(onboardingSchema),
     mode: 'onSubmit',
-    defaultValues: defaults,
+    defaultValues: defaults as DefaultValues<OnboardingValues>,
   })
 
   const gender = watch('gender')
@@ -116,7 +116,7 @@ export function DetailsScreen({ mode }: { mode: 'signup' | 'settings' }) {
             aria-describedby={errors.ageRange ? 'age-error' : undefined}
             {...register('ageRange')}
           >
-            <option value="" disabled>
+            <option value="">
               Select your range…
             </option>
             {AGE_RANGES.map((range) => (
@@ -138,7 +138,7 @@ export function DetailsScreen({ mode }: { mode: 'signup' | 'settings' }) {
             aria-describedby={errors.gender ? 'gender-error' : undefined}
             {...register('gender')}
           >
-            <option value="" disabled>
+            <option value="">
               Select an option…
             </option>
             {GENDER_OPTIONS.map((opt) => (
@@ -234,7 +234,6 @@ export function DetailsScreen({ mode }: { mode: 'signup' | 'settings' }) {
             className="flex h-14 flex-1 items-center justify-center gap-2 rounded-2xl bg-primary px-6 text-xl font-bold text-primary-foreground shadow-storybook transition-transform hover:bg-teal-dark active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none sm:flex-none sm:px-10"
           >
             Continue
-            <ArrowRight className="size-6" />
           </button>
         </div>
       </form>

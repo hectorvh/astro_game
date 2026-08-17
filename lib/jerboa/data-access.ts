@@ -1,5 +1,5 @@
-import type { AuthSession, ConsentRecord, ParticipantRecord } from './types'
-import type { CreateAccountInput, Credentials, OnboardingValues } from './schema'
+import type { AuthSession, ConsentRecord, ParticipantRecord, TrialRecord } from './types'
+import type { CreateAccountInput, Credentials, OnboardingValues, TrialInput } from './schema'
 import { getBackendMode } from './backend'
 import * as memory from './data-access-memory'
 import * as postgres from './data-access-postgres'
@@ -46,4 +46,8 @@ export async function createAccount(
 
 export async function logIn(credentials: Credentials): Promise<AuthSession> {
   return backend().logIn(credentials)
+}
+
+export async function recordTrial(input: TrialInput): Promise<TrialRecord> {
+  return backend().recordTrial(input)
 }

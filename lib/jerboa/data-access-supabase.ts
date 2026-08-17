@@ -170,3 +170,7 @@ export async function createAccount(): Promise<never> {
 export async function logIn(): Promise<never> {
   throw new Error('Log in needs the local database. Set NEXT_PUBLIC_JERBOA_BACKEND=postgres.')
 }
+
+export async function recordTrial(): Promise<never> {
+  throw new Error('Saving answers needs the local database. Set NEXT_PUBLIC_JERBOA_BACKEND=postgres.')
+}

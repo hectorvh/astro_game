@@ -67,7 +67,6 @@ export function InformationScreen() {
           className="flex h-14 flex-1 items-center justify-center gap-2 rounded-2xl bg-primary px-6 text-xl font-bold text-primary-foreground shadow-storybook transition-transform hover:bg-teal-dark active:translate-y-px sm:flex-none sm:px-10"
         >
           Continue
-          <ArrowRight className="size-6" />
         </button>
       </div>
     </Panel>

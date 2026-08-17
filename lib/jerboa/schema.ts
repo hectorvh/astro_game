@@ -65,3 +65,14 @@ export const createAccountSchema = credentialsSchema.extend({
 
 export type Credentials = z.infer<typeof credentialsSchema>
 export type CreateAccountInput = z.infer<typeof createAccountSchema>
+
+export const trialSchema = z.object({
+  minigame: z.string().min(1),
+  spatialCategory: z.enum(['topological', 'motion', 'projective', 'distance']),
+  stimulusId: z.string().min(1),
+  response: z.unknown(),
+  isCorrect: z.boolean().nullable(),
+  responseTimeMs: z.number().int().nonnegative().nullable(),
+})
+
+export type TrialInput = z.infer<typeof trialSchema>
