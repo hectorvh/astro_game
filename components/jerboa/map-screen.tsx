@@ -137,6 +137,21 @@ export function MapScreen() {
             />
           </button>
         </Marker>
+        <Marker x={84} y={16}>
+          <button
+            type="button"
+            onClick={() => goTo('bird3d')}
+            aria-label="Open a 3D view of the blue bird"
+            className="pointer-events-auto bg-transparent"
+          >
+            <img
+              src="/images/bird01.png"
+              alt=""
+              className="bird-cutout w-40 animate-bob drop-shadow-[0_12px_12px_rgba(63,47,30,0.3)] sm:w-48"
+              style={{ animationDelay: '0.8s' }}
+            />
+          </button>
+        </Marker>
       </div>
 
       {/* Footer hint */}

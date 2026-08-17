@@ -116,6 +116,20 @@
       transparent 88%
     );
   }
+  /* Knock out the black plate behind the bird illustration. */
+  .bird-cutout {
+    mix-blend-mode: screen;
+    -webkit-mask-image: radial-gradient(
+      ellipse 70% 72% at 50% 52%,
+      #000 52%,
+      transparent 88%
+    );
+    mask-image: radial-gradient(
+      ellipse 70% 72% at 50% 52%,
+      #000 52%,
+      transparent 88%
+    );
+  }
 }
 
 /* Respect reduced motion for parallax / idle animations */

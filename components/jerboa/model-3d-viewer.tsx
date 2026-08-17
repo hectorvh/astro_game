@@ -5,7 +5,6 @@ import { Canvas } from '@react-three/fiber'
 import { Center, Clone, OrbitControls, useGLTF, useProgress } from '@react-three/drei'
 import { Box3, Group, Vector3 } from 'three'
 
-const MODEL_SRC = '/3d/Jerboa_Creature.glb'
 const CAMERA_POSITION = new Vector3(0.5, 0.2, 1.0)
 const CAMERA_FOV = 40
 
@@ -14,8 +13,14 @@ function viewHeightAtCamera() {
   return 2 * Math.tan((CAMERA_FOV * Math.PI) / 360) * distance
 }
 
-function JerboaModel() {
-  const { scene } = useGLTF(MODEL_SRC)
+function CreatureModel({
+  modelSrc,
+  rotation,
+}: {
+  modelSrc: string
+  rotation: [number, number, number]
+}) {
+  const { scene } = useGLTF(modelSrc)
   const group = useRef<Group>(null)
 
   useLayoutEffect(() => {
@@ -33,26 +38,34 @@ function JerboaModel() {
   return (
     <group ref={group}>
       <Center>
-        <Clone object={scene} rotation={[0, Math.PI*1.1, 0]} />
+        <Clone object={scene} rotation={rotation} />
       </Center>
     </group>
   )
 }
 
-export function Jerboa3dLoading() {
+function Model3dLoading({ label }: { label: string }) {
   const { active, progress } = useProgress()
   if (!active) return null
   return (
     <p className="pointer-events-none absolute inset-x-0 top-1/2 z-10 -translate-y-1/2 text-center text-lg font-bold text-purple text-shadow-soft">
-      Loading Jerboa… {Math.round(progress)}%
+      Loading {label}… {Math.round(progress)}%
     </p>
   )
 }
 
-export function Jerboa3dViewer() {
+export function Model3dViewer({
+  modelSrc,
+  label,
+  rotation = [0, 0, 0],
+}: {
+  modelSrc: string
+  label: string
+  rotation?: [number, number, number]
+}) {
   return (
     <div className="relative h-full w-full">
-      <Jerboa3dLoading />
+      <Model3dLoading label={label} />
       <Canvas
         className="h-full w-full touch-none"
         camera={{
@@ -67,7 +80,7 @@ export function Jerboa3dViewer() {
         <directionalLight position={[4, 8, 5]} intensity={1.35} />
         <directionalLight position={[-4, 2, -3]} intensity={0.35} />
         <Suspense fallback={null}>
-          <JerboaModel />
+          <CreatureModel modelSrc={modelSrc} rotation={rotation} />
         </Suspense>
         <OrbitControls
           makeDefault
@@ -85,4 +98,5 @@ export function Jerboa3dViewer() {
   )
 }
 
-useGLTF.preload(MODEL_SRC)
+useGLTF.preload('/3d/Jerboa_Creature.glb')
+useGLTF.preload('/3d/Blue_Bird.glb')

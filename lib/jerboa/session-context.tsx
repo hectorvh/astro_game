@@ -29,6 +29,7 @@ export type Step =
   | 'map'
   | 'minigame1'
   | 'jerboa3d'
+  | 'bird3d'
   | 'declined'
 
 export const STEP_ORDER: Step[] = [
