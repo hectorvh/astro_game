@@ -17,6 +17,7 @@ import { ensureAnonymousSession, startFreshAnonymousSession } from './auth'
 import { createAccount, logIn, saveParticipant, signUp } from './data-access'
 
 export type Step =
+  | 'intro'
   | 'welcome'
   | 'signin'
   | 'login'
@@ -81,7 +82,7 @@ function profileDraft(p: ParticipantRecord): Partial<OnboardingValues> {
 const SessionContext = createContext<SessionContextValue | null>(null)
 
 export function SessionProvider({ children }: { children: ReactNode }) {
-  const [step, setStep] = useState<Step>('welcome')
+  const [step, setStep] = useState<Step>('intro')
   const [participant, setParticipant] = useState<ParticipantRecord | null>(null)
   const [draft, setDraft] = useState<Partial<OnboardingValues> | null>(null)
   const [credentials, setCredentials] = useState<Credentials | null>(null)

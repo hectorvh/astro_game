@@ -2,6 +2,7 @@
 
 import { SessionProvider, useSession } from '@/lib/jerboa/session-context'
 import { PanelStage } from './scene'
+import { IntroScreen } from './intro-screen'
 import { WelcomeScreen } from './welcome-screen'
 import { SignInScreen } from './signin-screen'
 import { LogInScreen } from './login-screen'
@@ -16,6 +17,8 @@ function CurrentScreen() {
   const { step, participant, credentials } = useSession()
 
   switch (step) {
+    case 'intro':
+      return <IntroScreen />
     case 'welcome':
       return (
         <PanelStage>

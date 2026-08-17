@@ -15,7 +15,7 @@ Browser
               ├── SessionProvider  (lib/jerboa/session-context.tsx)
               │     step, participant, login / signup / save / consent
               └── CurrentScreen
-                    welcome | signin | login | userdatasetup | settings |
+                    intro | welcome | signin | login | userdatasetup | settings |
                     information | consent | declined | title | map
 
 Writes
@@ -54,6 +54,7 @@ Writes
 
 | Step | Screen | File | What it does |
 | --- | --- | --- | --- |
+| `intro` | Opening video | `intro-screen.tsx` | Plays on first load, then Welcome. |
 | `welcome` | Welcome | `welcome-screen.tsx` | Log In, Sign In, UI language. |
 | `signin` | Create your user ID | `signin-screen.tsx` | Checks that the userid is free; does not create a row yet. |
 | `login` | Welcome back | `login-screen.tsx` | Existing account. **Log In** goes to the home screen. |
@@ -68,14 +69,15 @@ Writes
 The step name `userdatasetup` and the file `details-screen.tsx` differ on purpose: the file still uses the older `DetailsScreen` export.
 
 ```
-Welcome
- ├── Sign In (userid check only)
- │     → User data setup (draft)
- │     → Information
- │     → Consent → Create account  →  Title  →  Map
- │                    │
- │                    └── Decline (nothing saved) → Declined
- └── Log In  →  Title  →  Map
+Intro video (first load only)
+ └── Welcome
+      ├── Sign In (userid check only)
+      │     → User data setup (draft)
+      │     → Information
+      │     → Consent → Create account  →  Title  →  Map
+      │                    │
+      │                    └── Decline (nothing saved) → Declined
+      └── Log In  →  Title  →  Map
 ```
 
 **Settings** on Title and Map opens the settings step with the saved profile. Saving returns to Title. **Exit → Back to the start** clears the logged-in user (memory and cookie) so Sign In cannot see the previous account.

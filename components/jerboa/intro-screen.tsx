@@ -1,0 +1,85 @@
+'use client'
+
+import { useEffect, useRef, useState } from 'react'
+import { useSession } from '@/lib/jerboa/session-context'
+
+const INTRO_SRC = '/videos/generate_a_video_of_the_jerboa.mp4'
+
+export function IntroScreen() {
+  const { goTo } = useSession()
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const [needsTap, setNeedsTap] = useState(false)
+
+  function finish() {
+    goTo('welcome')
+  }
+
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video) return
+
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      goTo('welcome')
+      return
+    }
+
+    let cancelled = false
+
+    async function start() {
+      try {
+        video.muted = false
+        await video.play()
+      } catch {
+        try {
+          video.muted = true
+          await video.play()
+        } catch {
+          if (!cancelled) setNeedsTap(true)
+        }
+      }
+    }
+
+    void start()
+    return () => {
+      cancelled = true
+    }
+  }, [goTo])
+
+  async function playFromTap() {
+    const video = videoRef.current
+    if (!video) return
+    setNeedsTap(false)
+    try {
+      video.muted = false
+      await video.play()
+    } catch {
+      finish()
+    }
+  }
+
+  return (
+    <main className="relative flex min-h-dvh w-full items-center justify-center overflow-hidden bg-background">
+      <video
+        ref={videoRef}
+        className="absolute inset-0 h-full w-full object-cover"
+        src={INTRO_SRC}
+        playsInline
+        preload="auto"
+        disablePictureInPicture
+        onEnded={finish}
+        onError={finish}
+        aria-label="Jerboa's Journey introduction"
+      />
+
+      {needsTap ? (
+        <button
+          type="button"
+          onClick={() => void playFromTap()}
+          className="relative z-10 flex h-14 items-center justify-center rounded-2xl bg-primary px-8 text-xl font-bold text-primary-foreground shadow-storybook hover:bg-teal-dark"
+        >
+          Play
+        </button>
+      ) : null}
+    </main>
+  )
+}
