@@ -28,6 +28,7 @@ export type Step =
   | 'title'
   | 'map'
   | 'minigame1'
+  | 'jerboa3d'
   | 'declined'
 
 export const STEP_ORDER: Step[] = [

@@ -121,14 +121,21 @@ export function MapScreen() {
         ))}
       </div>
 
-      {/* Jerboa at the start */}
-      <div className="pointer-events-none absolute inset-0 z-10">
+      {/* Jerboa at the start — tap to open the 3D view */}
+      <div className="pointer-events-none absolute inset-0 z-[21]">
         <Marker x={10} y={72}>
-          <img
-            src="/images/jerboa.webp"
-            alt="Jerboa waiting at the start of the trail"
-            className="jerboa-cutout w-20 animate-bob drop-shadow-[0_12px_12px_rgba(63,47,30,0.3)] sm:w-24"
-          />
+          <button
+            type="button"
+            onClick={() => goTo('jerboa3d')}
+            aria-label="Open a 3D view of Jerboa"
+            className="pointer-events-auto bg-transparent"
+          >
+            <img
+              src="/images/jerboa.webp"
+              alt=""
+              className="jerboa-cutout w-80 animate-bob drop-shadow-[0_12px_12px_rgba(63,47,30,0.3)] sm:w-96"
+            />
+          </button>
         </Marker>
       </div>
 
