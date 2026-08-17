@@ -1,0 +1,12 @@
+# Local `pnpm dev` now uses API routes to persist to Postgres, so this site
+# is no longer a static `out/` export. A Netlify deploy needs the Next.js
+# runtime rather than `publish = "out"`. Until that is wired, this file
+# still describes the previous static prototype (memory backend).
+
+[build]
+  command = "pnpm build"
+  publish = "out"
+
+[build.environment]
+  NODE_VERSION = "22"
+  NEXT_PUBLIC_JERBOA_BACKEND = "memory"
