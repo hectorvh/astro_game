@@ -24,18 +24,15 @@ export function IntroScreen() {
     }
 
     let cancelled = false
+    video.muted = false
+    video.volume = 1
+    video.defaultMuted = false
 
     async function start() {
       try {
-        video.muted = false
         await video.play()
       } catch {
-        try {
-          video.muted = true
-          await video.play()
-        } catch {
-          if (!cancelled) setNeedsTap(true)
-        }
+        if (!cancelled) setNeedsTap(true)
       }
     }
 
@@ -48,10 +45,11 @@ export function IntroScreen() {
   async function playFromTap() {
     const video = videoRef.current
     if (!video) return
-    setNeedsTap(false)
+    video.muted = false
+    video.volume = 1
     try {
-      video.muted = false
       await video.play()
+      setNeedsTap(false)
     } catch {
       finish()
     }
