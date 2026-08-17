@@ -56,7 +56,10 @@ export function DetailsScreen({ mode }: { mode: 'signup' | 'settings' }) {
           genderOther: draft?.genderOther ?? '',
           country: draft?.country ?? '',
           uiLanguage: draft?.uiLanguage ?? 'en',
-          languages: draft?.languages ?? [],
+          languages:
+            draft?.languages && draft.languages.length > 0
+              ? draft.languages
+              : [{ language: '', fluency: 'native' }],
         }
 
   const {

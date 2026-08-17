@@ -34,7 +34,7 @@ const baloo = localFont({
 })
 
 export const metadata: Metadata = {
-  title: "Jerboa's Journey — A Spatial Communication Adventure",
+  title: "Jerboa's Journey",
   description:
     "A gamified spatial-language research instrument. Help Jerboa cross the desert while taking part in the SCALA study.",
 }
