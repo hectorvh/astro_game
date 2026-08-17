@@ -2,14 +2,12 @@ import { onboardingSchema } from '@/lib/jerboa/schema'
 import { query } from '@/lib/jerboa/postgres'
 import { postgresFacingMessage } from '@/lib/jerboa/postgres-errors'
 import { asUserRow, participantFromUserRow } from '@/lib/jerboa/participant-map'
-import {
-  getAccountId,
-  getParticipantId,
-  setParticipantId,
-} from '@/lib/jerboa/participant-session'
-import { findAccountById } from '@/lib/jerboa/account-queries'
+import { getParticipantId } from '@/lib/jerboa/participant-session'
+import { findUserById } from '@/lib/jerboa/user-queries'
 
 export const runtime = 'nodejs'
+
+const NOT_LOGGED_IN = 'Please log in again to save your answers.'
 
 export async function POST(request: Request) {
   let payload: unknown
@@ -31,10 +29,13 @@ export async function POST(request: Request) {
     )
   }
 
+  const userId = await getParticipantId()
+  const user = userId ? await findUserById(userId) : null
+  if (!user) {
+    return Response.json({ error: NOT_LOGGED_IN }, { status: 401 })
+  }
+
   const values = parsed.data
-  const accountId = await getAccountId()
-  const account = accountId ? await findAccountById(accountId) : null
-  const existingId = account?.user_id ?? (await getParticipantId())
 
   try {
     const { rows } = await query<{ user: unknown }>(
@@ -42,7 +43,7 @@ export async function POST(request: Request) {
          $1::uuid, $2, $3, $4, $5, $6, $7, $8::jsonb
        ) as user`,
       [
-        existingId ?? null,
+        user.id,
         values.name,
         values.ageRange,
         values.gender,
@@ -63,14 +64,6 @@ export async function POST(request: Request) {
       )
     }
 
-    if (account && !account.user_id) {
-      await query(
-        `update accounts set user_id = $1 where id = $2 and user_id is null`,
-        [row.id, account.id],
-      )
-    }
-
-    await setParticipantId(row.id)
     return Response.json(participantFromUserRow(row, values.languages))
   } catch (cause) {
     console.error('save_participant failed', cause)

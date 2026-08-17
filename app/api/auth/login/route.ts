@@ -1,13 +1,7 @@
 import { credentialsSchema } from '@/lib/jerboa/schema'
 import { verifyPassword } from '@/lib/jerboa/password'
-import {
-  findAccountByUserid,
-  loadAuthSession,
-} from '@/lib/jerboa/account-queries'
-import {
-  setAccountId,
-  setParticipantId,
-} from '@/lib/jerboa/participant-session'
+import { findUserByUserid, loadAuthSession } from '@/lib/jerboa/user-queries'
+import { setParticipantId } from '@/lib/jerboa/participant-session'
 import { postgresFacingMessage } from '@/lib/jerboa/postgres-errors'
 
 export const runtime = 'nodejs'
@@ -31,17 +25,13 @@ export async function POST(request: Request) {
   }
 
   try {
-    const account = await findAccountByUserid(parsed.data.userid)
-    if (!account || !(await verifyPassword(parsed.data.password, account.password_hash))) {
+    const user = await findUserByUserid(parsed.data.userid)
+    if (!user || !(await verifyPassword(parsed.data.password, user.password_hash))) {
       return Response.json({ error: INVALID }, { status: 401 })
     }
 
-    await setAccountId(account.id)
-    if (account.user_id) {
-      await setParticipantId(account.user_id)
-    }
-
-    return Response.json(await loadAuthSession(account))
+    await setParticipantId(user.id)
+    return Response.json(await loadAuthSession(user))
   } catch (cause) {
     console.error('Log in failed', cause)
     return Response.json(

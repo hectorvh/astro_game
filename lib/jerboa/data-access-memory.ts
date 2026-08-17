@@ -1,5 +1,5 @@
 import type { AuthSession, ConsentRecord, ParticipantRecord } from './types'
-import type { Credentials, OnboardingValues } from './schema'
+import type { CreateAccountInput, Credentials, OnboardingValues } from './schema'
 
 // Prototype backend: keeps records in memory and logs writes, so every screen
 // and navigation rule can be exercised without a database. Deliberately has no
@@ -8,11 +8,10 @@ import type { Credentials, OnboardingValues } from './schema'
 const store = {
   participants: new Map<string, ParticipantRecord>(),
   consents: [] as ConsentRecord[],
-  accounts: new Map<
+  users: new Map<
     string,
-    { userid: string; password: string; userId?: string }
+    { userid: string; password: string; userId: string }
   >(),
-  currentAccountKey: null as string | null,
 }
 
 function uuid(): string {
@@ -22,7 +21,11 @@ function uuid(): string {
   return 'p_' + Math.random().toString(36).slice(2) + Date.now().toString(36)
 }
 
-/** INSERT on first save, UPDATE on subsequent saves (spec §3, 1.2.C). */
+function keyOf(userid: string): string {
+  return userid.toLowerCase()
+}
+
+/** UPDATE an existing logged-in profile (Settings). */
 export async function saveParticipant(
   values: OnboardingValues,
   existingId?: string,
@@ -37,19 +40,7 @@ export async function saveParticipant(
     return updated
   }
 
-  const record: ParticipantRecord = {
-    id: uuid(),
-    ...values,
-    createdAt: now,
-    updatedAt: now,
-  }
-  store.participants.set(record.id, record)
-  if (store.currentAccountKey) {
-    const account = store.accounts.get(store.currentAccountKey)
-    if (account && !account.userId) account.userId = record.id
-  }
-  console.log('[jerboa] participant INSERT', record)
-  return record
+  throw new Error('Please log in again to save your answers.')
 }
 
 /** Records consent as an auditable row, not just a UI gate (spec §4.3). */
@@ -69,30 +60,47 @@ export async function recordConsent(
   return record
 }
 
-const accounts = store.accounts
-
-export async function signUp(credentials: Credentials): Promise<AuthSession> {
-  const key = credentials.userid.toLowerCase()
-  if (accounts.has(key)) {
+export async function signUp(credentials: Credentials): Promise<void> {
+  if (store.users.has(keyOf(credentials.userid))) {
     throw new Error('That user ID is already taken. Please choose another.')
   }
-  accounts.set(key, { userid: credentials.userid, password: credentials.password })
-  store.currentAccountKey = key
-  return { userid: credentials.userid, participant: null, consentGiven: false }
+}
+
+export async function createAccount(
+  input: CreateAccountInput,
+): Promise<AuthSession> {
+  const key = keyOf(input.userid)
+  if (store.users.has(key)) {
+    throw new Error('That user ID is already taken. Please choose another.')
+  }
+
+  const now = new Date().toISOString()
+  const record: ParticipantRecord = {
+    id: uuid(),
+    ...input.values,
+    createdAt: now,
+    updatedAt: now,
+  }
+  store.participants.set(record.id, record)
+  store.users.set(key, {
+    userid: input.userid,
+    password: input.password,
+    userId: record.id,
+  })
+  await recordConsent(record.id, input.consentVersion, true)
+  console.log('[jerboa] account INSERT', { userid: input.userid, id: record.id })
+  return { userid: input.userid, participant: record, consentGiven: true }
 }
 
 export async function logIn(credentials: Credentials): Promise<AuthSession> {
-  const key = credentials.userid.toLowerCase()
-  const account = accounts.get(key)
+  const account = store.users.get(keyOf(credentials.userid))
   if (!account || account.password !== credentials.password) {
     throw new Error('User ID or password is not correct.')
   }
-  store.currentAccountKey = key
-  const participant = account.userId
-    ? (store.participants.get(account.userId) ?? null)
-    : null
-  const consentGiven = participant
-    ? store.consents.some((c) => c.userId === participant.id && c.agreed)
-    : false
-  return { userid: account.userid, participant, consentGiven }
+  const participant = store.participants.get(account.userId) ?? null
+  return {
+    userid: account.userid,
+    participant,
+    consentGiven: Boolean(participant),
+  }
 }

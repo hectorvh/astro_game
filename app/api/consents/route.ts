@@ -9,7 +9,7 @@ export async function POST(request: Request) {
   const userId = await getParticipantId()
   if (!userId) {
     return Response.json(
-      { error: 'Your session is not allowed to save these answers. Please reload the page.' },
+      { error: 'Please log in again to save your answers.' },
       { status: 401 },
     )
   }
@@ -31,33 +31,37 @@ export async function POST(request: Request) {
 
   try {
     const { rows } = await query<{
-      user_id: string
+      id: string
       consent_version: string
-      agreed: boolean
-      timestamp: Date | string
+      consent_agreed: boolean
+      consent_at: Date | string
     }>(
-      `insert into consents (user_id, consent_version, agreed)
-       values ($1, $2, $3)
-       returning user_id, consent_version, agreed, timestamp`,
+      `update users
+       set consent_version = $2,
+           consent_agreed = $3,
+           consent_at = now(),
+           updated_at = now()
+       where id = $1
+       returning id, consent_version, consent_agreed, consent_at`,
       [userId, body.consentVersion, body.agreed],
     )
 
     const row = rows[0]
     if (!row) {
       return Response.json(
-        { error: 'We could not save your answers just now. Please try again.' },
-        { status: 500 },
+        { error: 'Please log in again to save your answers.' },
+        { status: 401 },
       )
     }
 
     const record: ConsentRecord = {
-      userId: row.user_id,
+      userId: row.id,
       consentVersion: row.consent_version,
-      agreed: row.agreed,
+      agreed: row.consent_agreed,
       timestamp:
-        row.timestamp instanceof Date
-          ? row.timestamp.toISOString()
-          : String(row.timestamp),
+        row.consent_at instanceof Date
+          ? row.consent_at.toISOString()
+          : String(row.consent_at),
     }
     return Response.json(record)
   } catch (cause) {

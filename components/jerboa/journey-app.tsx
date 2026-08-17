@@ -13,7 +13,7 @@ import { TitleScreen } from './title-screen'
 import { MapScreen } from './map-screen'
 
 function CurrentScreen() {
-  const { step, participant } = useSession()
+  const { step, participant, credentials } = useSession()
 
   switch (step) {
     case 'welcome':
@@ -25,7 +25,7 @@ function CurrentScreen() {
     case 'signin':
       return (
         <PanelStage>
-          <SignInScreen />
+          <SignInScreen key={credentials?.userid ?? 'new'} />
         </PanelStage>
       )
     case 'login':
@@ -37,7 +37,13 @@ function CurrentScreen() {
     case 'userdatasetup':
       return (
         <PanelStage>
-          <DetailsScreen key={participant?.id ?? 'new'} />
+          <DetailsScreen mode="signup" key={credentials?.userid ?? 'signup'} />
+        </PanelStage>
+      )
+    case 'settings':
+      return (
+        <PanelStage>
+          <DetailsScreen mode="settings" key={participant?.id ?? 'settings'} />
         </PanelStage>
       )
     case 'information':

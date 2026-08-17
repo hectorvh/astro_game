@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint .",
     "db:apply": "bash db/apply.sh",
+    "db:merge": "bash db/merge.sh",
     "db:psql": "psql jerboa"
   },
   "dependencies": {

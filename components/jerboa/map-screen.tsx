@@ -55,7 +55,7 @@ export function MapScreen() {
           </button>
           <button
             type="button"
-            onClick={() => goTo('userdatasetup')}
+            onClick={() => goTo('settings')}
             aria-label="Settings — edit your details"
             className="flex size-12 items-center justify-center rounded-2xl border-2 border-secondary/40 bg-card/90 text-foreground shadow-storybook backdrop-blur-sm transition-colors hover:bg-muted"
           >

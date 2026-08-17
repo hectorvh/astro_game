@@ -12,6 +12,7 @@ import {
   Users,
 } from 'lucide-react'
 import { onboardingSchema, type OnboardingValues } from '@/lib/jerboa/schema'
+import type { ParticipantRecord } from '@/lib/jerboa/types'
 import {
   AGE_RANGES,
   COUNTRY_OPTIONS,
@@ -22,8 +23,41 @@ import { Panel } from './scene'
 import { FieldError, FieldLabel, NativeSelect, TextInput } from './form-fields'
 import { LanguagePicker } from './language-picker'
 
-export function DetailsScreen() {
-  const { draft, error, authStatus, participant, goTo, submitOnboarding } = useSession()
+function profileFromParticipant(p: ParticipantRecord): OnboardingValues {
+  return {
+    name: p.name,
+    ageRange: p.ageRange as OnboardingValues['ageRange'],
+    gender: p.gender,
+    genderOther: p.genderOther,
+    country: p.country,
+    uiLanguage: p.uiLanguage,
+    languages: p.languages,
+  }
+}
+
+export function DetailsScreen({ mode }: { mode: 'signup' | 'settings' }) {
+  const {
+    draft,
+    error,
+    authStatus,
+    participant,
+    goTo,
+    submitOnboarding,
+    submitSettings,
+  } = useSession()
+
+  const defaults =
+    mode === 'settings' && participant
+      ? profileFromParticipant(participant)
+      : {
+          name: draft?.name ?? '',
+          ageRange: draft?.ageRange ?? undefined,
+          gender: draft?.gender ?? undefined,
+          genderOther: draft?.genderOther ?? '',
+          country: draft?.country ?? '',
+          uiLanguage: draft?.uiLanguage ?? 'en',
+          languages: draft?.languages ?? [],
+        }
 
   const {
     register,
@@ -34,15 +68,7 @@ export function DetailsScreen() {
   } = useForm<OnboardingValues>({
     resolver: zodResolver(onboardingSchema),
     mode: 'onSubmit',
-    defaultValues: {
-      name: draft?.name ?? '',
-      ageRange: draft?.ageRange ?? undefined,
-      gender: draft?.gender ?? undefined,
-      genderOther: draft?.genderOther ?? '',
-      country: draft?.country ?? '',
-      uiLanguage: draft?.uiLanguage ?? 'en',
-      languages: draft?.languages ?? [],
-    },
+    defaultValues: defaults,
   })
 
   const gender = watch('gender')
@@ -57,7 +83,9 @@ export function DetailsScreen() {
       </div>
 
       <form
-        onSubmit={handleSubmit((values) => submitOnboarding(values))}
+        onSubmit={handleSubmit((values) =>
+          mode === 'settings' ? submitSettings(values) : submitOnboarding(values),
+        )}
         noValidate
         className="flex flex-col gap-5"
       >
@@ -190,7 +218,7 @@ export function DetailsScreen() {
         <div className="mt-2 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
           <button
             type="button"
-            onClick={() => goTo(participant ? 'title' : 'signin')}
+            onClick={() => goTo(mode === 'settings' ? 'title' : 'signin')}
             className="flex h-14 items-center justify-center gap-2 rounded-2xl border-2 border-input bg-background px-6 text-lg font-bold text-foreground transition-colors hover:bg-muted"
           >
             <ArrowLeft className="size-5" />

@@ -6,7 +6,7 @@ import { useSession } from '@/lib/jerboa/session-context'
 import { DecorGlyphs } from './scene'
 
 export function TitleScreen() {
-  const { goTo } = useSession()
+  const { resetSession, goTo } = useSession()
   const [overlay, setOverlay] = useState<null | 'about' | 'exit'>(null)
 
   const menu = [
@@ -19,7 +19,7 @@ export function TitleScreen() {
     {
       label: 'Settings',
       icon: Settings,
-      onClick: () => goTo('userdatasetup'),
+      onClick: () => goTo('settings'),
       className: 'bg-secondary text-secondary-foreground hover:bg-amber-dark',
     },
     {
@@ -128,7 +128,7 @@ export function TitleScreen() {
                   type="button"
                   onClick={() => {
                     setOverlay(null)
-                    goTo('welcome')
+                    resetSession()
                   }}
                   className="flex h-12 w-full items-center justify-center rounded-2xl bg-primary text-lg font-bold text-primary-foreground hover:bg-teal-dark"
                 >

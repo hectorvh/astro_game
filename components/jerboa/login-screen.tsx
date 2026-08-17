@@ -2,7 +2,7 @@
 
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { ArrowLeft, ArrowRight, KeyRound, UserRound } from 'lucide-react'
+import { ArrowLeft, KeyRound, LogIn, UserRound } from 'lucide-react'
 import { credentialsSchema, type Credentials } from '@/lib/jerboa/schema'
 import { useSession } from '@/lib/jerboa/session-context'
 import { Panel } from './scene'
@@ -25,9 +25,6 @@ export function LogInScreen() {
   return (
     <Panel className="max-w-lg">
       <div className="mb-6 text-center">
-        <p className="mb-1 text-sm font-bold tracking-widest text-primary uppercase">
-          Log In
-        </p>
         <h1 className="font-display text-3xl font-bold text-purple text-balance sm:text-4xl">
           Welcome back
         </h1>
@@ -92,8 +89,8 @@ export function LogInScreen() {
             aria-disabled={blocked}
             className="flex h-14 flex-1 items-center justify-center gap-2 rounded-2xl bg-primary px-6 text-xl font-bold text-primary-foreground shadow-storybook transition-transform hover:bg-teal-dark active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none sm:flex-none sm:px-10"
           >
-            Continue
-            <ArrowRight className="size-6" />
+            <LogIn className="size-6" />
+            Log In
           </button>
         </div>
       </form>

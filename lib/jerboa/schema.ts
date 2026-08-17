@@ -57,4 +57,11 @@ export const credentialsSchema = z.object({
     .max(128, 'That password is a little too long.'),
 })
 
+export const createAccountSchema = credentialsSchema.extend({
+  values: onboardingSchema,
+  consentVersion: z.string().min(1),
+  agreed: z.literal(true),
+})
+
 export type Credentials = z.infer<typeof credentialsSchema>
+export type CreateAccountInput = z.infer<typeof createAccountSchema>

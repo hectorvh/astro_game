@@ -15,7 +15,7 @@ Browser
               ├── SessionProvider  (lib/jerboa/session-context.tsx)
               │     step, participant, login / signup / save / consent
               └── CurrentScreen
-                    welcome | signin | login | userdatasetup |
+                    welcome | signin | login | userdatasetup | settings |
                     information | consent | declined | title | map
 
 Writes
@@ -31,12 +31,12 @@ Writes
 | --- | --- | --- |
 | Screens | `components/jerboa/*-screen.tsx` | UI only. Call `useSession()` to move or save. |
 | Flow | `lib/jerboa/session-context.tsx` | Holds `step`, profile draft, and auth status. |
-| Data access | `lib/jerboa/data-access.ts` | `signUp`, `logIn`, `saveParticipant`, `recordConsent`. |
+| Data access | `lib/jerboa/data-access.ts` | `signUp` (userid check), `createAccount`, `logIn`, `saveParticipant`, `recordConsent`. |
 | Backend switch | `lib/jerboa/backend.ts` | Reads `NEXT_PUBLIC_JERBOA_BACKEND`. |
 | HTTP API | `app/api/...` | Used in **postgres** mode. The browser never talks to Postgres. |
-| Database | `db/local.sql`, `db/accounts.sql` | Users, languages, consents, trials, login accounts. |
+| Database | `db/local.sql` | Users, languages, trials. Existing databases: `pnpm db:merge`. |
 
-**Postgres mode (local default):** Next.js route handlers use `pg` and Unix-socket peer auth. Identity is two httpOnly cookies (`jerboa_account`, `jerboa_participant`). Passwords are stored as `scrypt` hashes, never in plaintext.
+**Postgres mode (local default):** Next.js route handlers use `pg` and Unix-socket peer auth. Identity is one httpOnly cookie (`jerboa_participant` = `users.id`). Passwords are stored as `scrypt` hashes, never in plaintext. A user row is written only when **Create account** succeeds at the end of sign-in.
 
 **Supabase mode:** the browser talks to a hosted project with the publishable key. Row-level security is required. The migration in `supabase/migrations/` is a **different** schema (`auth.uid()`); do not apply it to the local `jerboa` database.
 
@@ -44,10 +44,8 @@ Writes
 
 ### Persistence (postgres)
 
-- `accounts` — userid + password hash, optionally linked to a `users` row
-- `users` — name, age range, gender, country, UI language
+- `users` — userid, password hash, name, age range, gender, country, UI language, consent version and timestamp
 - `user_languages` — language + fluency (at least one required)
-- `consents` — append-only audit (`agreed` true or false)
 - `data` — mini-game trials (schema ready; games not built yet)
 
 ## Screens
@@ -57,11 +55,12 @@ Writes
 | Step | Screen | File | What it does |
 | --- | --- | --- | --- |
 | `welcome` | Welcome | `welcome-screen.tsx` | Log In, Sign In, UI language. |
-| `signin` | Create your user ID | `signin-screen.tsx` | New account (userid + password). |
-| `login` | Welcome back | `login-screen.tsx` | Existing account. |
-| `userdatasetup` | Tell us a bit about yourself | `details-screen.tsx` | Demographics. Also opened from **Settings**. |
+| `signin` | Create your user ID | `signin-screen.tsx` | Checks that the userid is free; does not create a row yet. |
+| `login` | Welcome back | `login-screen.tsx` | Existing account. **Log In** goes to the home screen. |
+| `userdatasetup` | Tell us a bit about yourself | `details-screen.tsx` (`mode="signup"`) | Sign In demographics. Empty form, kept in memory until Create account. |
+| `settings` | Tell us a bit about yourself | `details-screen.tsx` (`mode="settings"`) | Edit the logged-in profile. Save returns to home. |
 | `information` | Participant Information | `information-screen.tsx` | Study explanation (placeholder copy). |
-| `consent` | Ethical Information & Consent | `consent-screen.tsx` | Tick-box gate; both Agree and Decline are stored. |
+| `consent` | Ethical Information & Consent | `consent-screen.tsx` | Tick-box gate, then **Create account** (writes the `users` row, including consent). Decline writes nothing. |
 | `declined` | Thank you for your time | `declined-screen.tsx` | Terminal state after Decline. |
 | `title` | Home menu | `title-screen.tsx` | Start Playing, Settings, About, Exit. |
 | `map` | Desert trail | `map-screen.tsx` | Five stops. Mini-games are “coming soon”. |
@@ -70,15 +69,16 @@ The step name `userdatasetup` and the file `details-screen.tsx` differ on purpos
 
 ```
 Welcome
- ├── Sign In  →  User data setup  →  Information  →  Consent  →  Title  →  Map
- │                                                      │
- │                                                      └── Decline → Declined
- └── Log In
-       ├── saved profile  →  Title
-       └── no profile     →  User data setup  →  …
+ ├── Sign In (userid check only)
+ │     → User data setup (draft)
+ │     → Information
+ │     → Consent → Create account  →  Title  →  Map
+ │                    │
+ │                    └── Decline (nothing saved) → Declined
+ └── Log In  →  Title  →  Map
 ```
 
-**Settings** on Title and Map always opens user-data setup with the saved profile pre-filled. Saving from Settings returns to Title instead of repeating information and consent.
+**Settings** on Title and Map opens the settings step with the saved profile. Saving returns to Title. **Exit → Back to the start** clears the logged-in user (memory and cookie) so Sign In cannot see the previous account.
 
 Shared UI (not screens): `scene.tsx` (card / backdrop), `form-fields.tsx`, `language-picker.tsx`.
 
@@ -122,11 +122,11 @@ DATABASE_URL=postgresql:///jerboa?host=/var/run/postgresql
 3. Apply the schema (tables, grants, and the `hector` login role used by `db/apply.sh`):
 
 ```bash
-pnpm db:apply
-psql jerboa -f db/accounts.sql
+pnpm db:apply          # empty database
+pnpm db:merge          # existing database that still has an `accounts` table
 ```
 
-`pnpm db:apply` uses Docker as the `postgres` OS user to talk to the Unix socket. You still need a local `psql` client for `accounts.sql` (or run that file the same way as `local.sql`).
+`pnpm db:apply` / `pnpm db:merge` use Docker as the `postgres` OS user to talk to the Unix socket.
 
 4. Start the Next.js server:
 

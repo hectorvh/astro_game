@@ -13,7 +13,7 @@ export async function GET() {
     }>(
       `select
          (select count(*)::text from users) as users,
-         (select count(*)::text from consents) as consents,
+         (select count(*)::text from users where consent_agreed) as consents,
          (select count(*)::text from data) as trials`,
     )
     return Response.json({ ok: true, ...rows[0] })

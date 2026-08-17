@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ArrowRight, Check, FileCheck2, HeartHandshake, Lock, ShieldCheck } from 'lucide-react'
+import { ArrowLeft, Check, FileCheck2, HeartHandshake, Lock, ShieldCheck, UserPlus } from 'lucide-react'
 import { useSession } from '@/lib/jerboa/session-context'
 import { Panel } from './scene'
 
@@ -29,7 +29,7 @@ const STATEMENTS = [
 ]
 
 export function ConsentScreen() {
-  const { error, authStatus, submitConsent } = useSession()
+  const { error, authStatus, goTo, submitConsent } = useSession()
   const [agreed, setAgreed] = useState(false)
   const [busy, setBusy] = useState(false)
 
@@ -110,6 +110,14 @@ export function ConsentScreen() {
       <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
         <button
           type="button"
+          onClick={() => goTo('information')}
+          className="flex h-14 items-center justify-center gap-2 rounded-2xl border-2 border-input bg-background px-6 text-lg font-bold text-foreground transition-colors hover:bg-muted"
+        >
+          <ArrowLeft className="size-5" />
+          Back
+        </button>
+        <button
+          type="button"
           onClick={() => handleDecision(false)}
           disabled={blocked}
           aria-disabled={blocked}
@@ -124,13 +132,13 @@ export function ConsentScreen() {
           aria-disabled={!agreed || blocked}
           className="flex h-14 flex-1 items-center justify-center gap-2 rounded-2xl bg-primary px-6 text-xl font-bold text-primary-foreground shadow-storybook transition-transform hover:bg-teal-dark active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none sm:flex-none sm:px-10"
         >
-          I Agree
-          <ArrowRight className="size-6" />
+          <UserPlus className="size-6" />
+          Create account
         </button>
       </div>
       {!agreed ? (
         <p className="mt-3 text-center text-sm text-muted-foreground">
-          Please tick the box above to continue to the adventure.
+          Please tick the box above to create your account.
         </p>
       ) : null}
     </Panel>

@@ -10,16 +10,18 @@ import {
   type ReactNode,
 } from 'react'
 import type { Credentials, OnboardingValues } from './schema'
+import { onboardingSchema } from './schema'
 import type { ParticipantRecord } from './types'
 import { CONSENT_VERSION } from './constants'
 import { ensureAnonymousSession, startFreshAnonymousSession } from './auth'
-import { logIn, recordConsent, saveParticipant, signUp } from './data-access'
+import { createAccount, logIn, saveParticipant, signUp } from './data-access'
 
 export type Step =
   | 'welcome'
   | 'signin'
   | 'login'
   | 'userdatasetup'
+  | 'settings'
   | 'information'
   | 'consent'
   | 'title'
@@ -42,14 +44,18 @@ interface SessionContextValue {
   step: Step
   participant: ParticipantRecord | null
   draft: Partial<OnboardingValues> | null
+  credentials: Credentials | null
   consentGiven: boolean
   error: string | null
   authStatus: AuthStatus
   goTo: (step: Step) => void
   patchDraft: (partial: Partial<OnboardingValues>) => void
+  startLogIn: () => Promise<void>
+  startSignIn: () => Promise<void>
   submitSignUp: (credentials: Credentials) => Promise<void>
   submitLogIn: (credentials: Credentials) => Promise<void>
   submitOnboarding: (values: OnboardingValues) => Promise<void>
+  submitSettings: (values: OnboardingValues) => Promise<void>
   submitConsent: (agreed: boolean) => Promise<void>
   resetSession: () => void
 }
@@ -72,23 +78,13 @@ function profileDraft(p: ParticipantRecord): Partial<OnboardingValues> {
   }
 }
 
-function hasSavedProfile(p: ParticipantRecord | null): p is ParticipantRecord {
-  return Boolean(
-    p &&
-      p.name.trim() &&
-      p.ageRange &&
-      p.gender &&
-      p.country &&
-      p.languages.length > 0,
-  )
-}
-
 const SessionContext = createContext<SessionContextValue | null>(null)
 
 export function SessionProvider({ children }: { children: ReactNode }) {
   const [step, setStep] = useState<Step>('welcome')
   const [participant, setParticipant] = useState<ParticipantRecord | null>(null)
   const [draft, setDraft] = useState<Partial<OnboardingValues> | null>(null)
+  const [credentials, setCredentials] = useState<Credentials | null>(null)
   const [consentGiven, setConsentGiven] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [authStatus, setAuthStatus] = useState<AuthStatus>('pending')
@@ -121,11 +117,43 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     setDraft((prev) => ({ ...prev, ...partial }))
   }, [])
 
+  const dropAccount = useCallback(async (keepUiLanguage: boolean) => {
+    const uiLanguage = keepUiLanguage ? (draft?.uiLanguage ?? 'en') : undefined
+    setParticipant(null)
+    setCredentials(null)
+    setConsentGiven(false)
+    setDraft(uiLanguage ? { uiLanguage } : null)
+    await startFreshAnonymousSession()
+  }, [draft?.uiLanguage])
+
+  const startLogIn = useCallback(async () => {
+    setError(null)
+    try {
+      await dropAccount(true)
+      goTo('login')
+    } catch (cause) {
+      setError(messageFor(cause))
+    }
+  }, [dropAccount, goTo])
+
+  const startSignIn = useCallback(async () => {
+    setError(null)
+    try {
+      await dropAccount(true)
+      goTo('signin')
+    } catch (cause) {
+      setError(messageFor(cause))
+    }
+  }, [dropAccount, goTo])
+
   const submitSignUp = useCallback(
-    async (credentials: Credentials) => {
+    async (values: Credentials) => {
       setError(null)
       try {
-        await signUp(credentials)
+        await signUp(values)
+        setCredentials(values)
+        setParticipant(null)
+        setConsentGiven(false)
         goTo('userdatasetup')
       } catch (cause) {
         setError(messageFor(cause))
@@ -135,18 +163,15 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   )
 
   const submitLogIn = useCallback(
-    async (credentials: Credentials) => {
+    async (values: Credentials) => {
       setError(null)
       try {
-        const session = await logIn(credentials)
+        const session = await logIn(values)
+        setCredentials(null)
         setParticipant(session.participant)
         setConsentGiven(session.consentGiven)
-        if (hasSavedProfile(session.participant)) {
-          setDraft(profileDraft(session.participant))
-          goTo('title')
-        } else {
-          goTo('userdatasetup')
-        }
+        if (session.participant) setDraft(profileDraft(session.participant))
+        goTo('title')
       } catch (cause) {
         setError(messageFor(cause))
       }
@@ -158,41 +183,72 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     async (values: OnboardingValues) => {
       setDraft(values)
       setError(null)
+      goTo('information')
+    },
+    [goTo],
+  )
+
+  const submitSettings = useCallback(
+    async (values: OnboardingValues) => {
+      setError(null)
+      if (!participant) {
+        setError('Please log in again to save your answers.')
+        return
+      }
       try {
-        const saved = await saveParticipant(values, participant?.id)
+        const saved = await saveParticipant(values, participant.id)
         setParticipant(saved)
-        goTo(participant ? 'title' : 'information')
+        setDraft(profileDraft(saved))
+        goTo('title')
       } catch (cause) {
         setError(messageFor(cause))
       }
     },
-    [participant?.id, goTo],
+    [participant, goTo],
   )
 
   const submitConsent = useCallback(
     async (agreed: boolean) => {
       setError(null)
-      if (participant) {
-        try {
-          await recordConsent(participant.id, CONSENT_VERSION, agreed)
-        } catch (cause) {
-          setError(messageFor(cause))
-          return
-        }
-      }
-      setConsentGiven(agreed)
       if (!agreed) {
+        setCredentials(null)
         setParticipant(null)
         setDraft(null)
+        setConsentGiven(false)
+        goTo('declined')
+        return
       }
-      goTo(agreed ? 'title' : 'declined')
+
+      const parsed = onboardingSchema.safeParse(draft)
+      if (!credentials || !parsed.success) {
+        setError('Please go back and complete your user ID and details first.')
+        return
+      }
+
+      try {
+        const session = await createAccount({
+          userid: credentials.userid,
+          password: credentials.password,
+          values: parsed.data,
+          consentVersion: CONSENT_VERSION,
+          agreed: true,
+        })
+        setCredentials(null)
+        setParticipant(session.participant)
+        setConsentGiven(true)
+        if (session.participant) setDraft(profileDraft(session.participant))
+        goTo('title')
+      } catch (cause) {
+        setError(messageFor(cause))
+      }
     },
-    [participant, goTo],
+    [credentials, draft, goTo],
   )
 
   const resetSession = useCallback(() => {
     setParticipant(null)
     setDraft(null)
+    setCredentials(null)
     setConsentGiven(false)
     setAuthStatus('pending')
     goTo('welcome')
@@ -209,14 +265,18 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       step,
       participant,
       draft,
+      credentials,
       consentGiven,
       error,
       authStatus,
       goTo,
       patchDraft,
+      startLogIn,
+      startSignIn,
       submitSignUp,
       submitLogIn,
       submitOnboarding,
+      submitSettings,
       submitConsent,
       resetSession,
     }),
@@ -224,14 +284,18 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       step,
       participant,
       draft,
+      credentials,
       consentGiven,
       error,
       authStatus,
       goTo,
       patchDraft,
+      startLogIn,
+      startSignIn,
       submitSignUp,
       submitLogIn,
       submitOnboarding,
+      submitSettings,
       submitConsent,
       resetSession,
     ],

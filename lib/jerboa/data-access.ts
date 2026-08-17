@@ -1,5 +1,5 @@
 import type { AuthSession, ConsentRecord, ParticipantRecord } from './types'
-import type { Credentials, OnboardingValues } from './schema'
+import type { CreateAccountInput, Credentials, OnboardingValues } from './schema'
 import { getBackendMode } from './backend'
 import * as memory from './data-access-memory'
 import * as postgres from './data-access-postgres'
@@ -33,8 +33,15 @@ export async function recordConsent(
   return backend().recordConsent(userId, consentVersion, agreed)
 }
 
-export async function signUp(credentials: Credentials): Promise<AuthSession> {
+/** Checks that a userid is free. Does not create a row. */
+export async function signUp(credentials: Credentials): Promise<void> {
   return backend().signUp(credentials)
+}
+
+export async function createAccount(
+  input: CreateAccountInput,
+): Promise<AuthSession> {
+  return backend().createAccount(input)
 }
 
 export async function logIn(credentials: Credentials): Promise<AuthSession> {

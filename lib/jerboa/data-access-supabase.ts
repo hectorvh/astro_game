@@ -37,7 +37,7 @@ const FRIENDLY_ERRORS: ReadonlyArray<readonly [RegExp, string]> = [
   ],
   [
     /row-level security/i,
-    'Your session is not allowed to save these answers. Please reload the page.',
+    'Please log in again to save your answers.',
   ],
   [
     /Failed to fetch|NetworkError|fetch failed/i,
@@ -160,6 +160,10 @@ export async function recordConsent(
 }
 
 export async function signUp(): Promise<never> {
+  throw new Error('Sign in needs the local database. Set NEXT_PUBLIC_JERBOA_BACKEND=postgres.')
+}
+
+export async function createAccount(): Promise<never> {
   throw new Error('Sign in needs the local database. Set NEXT_PUBLIC_JERBOA_BACKEND=postgres.')
 }
 

@@ -7,7 +7,7 @@ import { Panel } from './scene'
 import { FieldLabel, NativeSelect } from './form-fields'
 
 export function WelcomeScreen() {
-  const { draft, authStatus, error, goTo, patchDraft } = useSession()
+  const { startLogIn, startSignIn, draft, authStatus, error, patchDraft } = useSession()
   const uiLanguage = draft?.uiLanguage ?? 'en'
   const blocked = authStatus !== 'ready'
 
@@ -38,7 +38,7 @@ export function WelcomeScreen() {
           type="button"
           disabled={blocked}
           aria-disabled={blocked}
-          onClick={() => goTo('login')}
+          onClick={() => void startLogIn()}
           className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl border-2 border-input bg-background px-6 text-xl font-bold text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
         >
           <LogIn className="size-6" />
@@ -48,7 +48,7 @@ export function WelcomeScreen() {
           type="button"
           disabled={blocked}
           aria-disabled={blocked}
-          onClick={() => goTo('signin')}
+          onClick={() => void startSignIn()}
           className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-primary px-6 text-xl font-bold text-primary-foreground shadow-storybook transition-transform hover:bg-teal-dark active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
         >
           <UserPlus className="size-6" />

@@ -1,9 +1,9 @@
 -- Jerboa's Journey — schema for a vanilla local Postgres (database `jerboa`).
 --
 -- This is the spec §4 model without Supabase-only pieces (auth.uid(), the
--- `authenticated` role, RLS keyed to a JWT). The Next.js server is the only
--- client, so identity is a participant uuid held in an httpOnly cookie, not a
--- token. The Supabase migration in supabase/migrations/ remains the cloud
+-- `authenticated` role, RLS keyed to a JWT). Login identity lives on `users`
+-- (userid + password hash plus the research profile). A participant uuid is
+-- held in an httpOnly cookie. The Supabase migration in supabase/migrations/ remains the cloud
 -- schema and must not be applied here.
 --
 -- Apply with: pnpm db:apply
@@ -15,15 +15,24 @@ begin;
 -- ---------------------------------------------------------------------------
 
 create table users (
-  id           uuid primary key default gen_random_uuid(),
-  name         text,
-  age_range    text not null,
-  gender       text not null check (gender in ('male', 'female', 'other')),
-  gender_other text,
-  country      text not null,
-  ui_language  text not null,
-  created_at   timestamptz not null default now(),
-  updated_at   timestamptz not null default now(),
+  id            uuid primary key default gen_random_uuid(),
+  userid        text not null,
+  password_hash text not null,
+  name          text,
+  age_range     text not null,
+  gender        text not null check (gender in ('male', 'female', 'other')),
+  gender_other  text,
+  country       text not null,
+  ui_language   text not null,
+  consent_version text not null,
+  consent_agreed  boolean not null default true,
+  consent_at      timestamptz not null default now(),
+  created_at    timestamptz not null default now(),
+  updated_at    timestamptz not null default now(),
+  constraint users_userid_format check (
+    char_length(userid) between 3 and 32
+    and userid ~ '^[A-Za-z0-9_]+$'
+  ),
   constraint gender_other_only_when_other check (
     (gender = 'other') = (gender_other is not null)
   ),
@@ -31,6 +40,8 @@ create table users (
     name is null or char_length(btrim(name)) between 1 and 80
   )
 );
+
+create unique index users_userid_lower_idx on users (lower(userid));
 
 create table user_languages (
   id       uuid primary key default gen_random_uuid(),
@@ -43,20 +54,6 @@ create table user_languages (
 );
 
 create index user_languages_user_id_idx on user_languages (user_id);
-
--- ---------------------------------------------------------------------------
--- 4.3 consents
--- ---------------------------------------------------------------------------
-
-create table consents (
-  id              uuid primary key default gen_random_uuid(),
-  user_id         uuid not null references users (id) on delete cascade,
-  consent_version text not null,
-  agreed          boolean not null,
-  timestamp       timestamptz not null default now()
-);
-
-create index consents_user_id_idx on consents (user_id);
 
 -- ---------------------------------------------------------------------------
 -- 4.2 data — ready for mini-games; no `ip` column (spec §5)
@@ -120,7 +117,7 @@ create constraint trigger user_languages_require_one
   for each row execute function assert_language_remains();
 
 -- ---------------------------------------------------------------------------
--- save_participant — atomic upsert (spec §1.2.C)
+-- save_participant — update an existing logged-in user (Settings)
 -- ---------------------------------------------------------------------------
 
 create function save_participant(
@@ -139,36 +136,74 @@ as $$
 declare
   v_user users;
 begin
+  if p_user_id is null then
+    raise exception 'unknown participant';
+  end if;
+
   if jsonb_array_length(coalesce(p_languages, '[]'::jsonb)) < 1 then
     raise exception 'at least one spoken language is required';
   end if;
 
-  if p_user_id is null then
-    insert into users (
-      name, age_range, gender, gender_other, country, ui_language
-    )
-    values (
-      p_name, p_age_range, p_gender, p_gender_other, p_country, p_ui_language
-    )
-    returning * into v_user;
-  else
-    update users
-    set name = p_name,
-        age_range = p_age_range,
-        gender = p_gender,
-        gender_other = p_gender_other,
-        country = p_country,
-        ui_language = p_ui_language,
-        updated_at = now()
-    where id = p_user_id
-    returning * into v_user;
+  update users
+  set name = p_name,
+      age_range = p_age_range,
+      gender = p_gender,
+      gender_other = p_gender_other,
+      country = p_country,
+      ui_language = p_ui_language,
+      updated_at = now()
+  where id = p_user_id
+  returning * into v_user;
 
-    if v_user.id is null then
-      raise exception 'unknown participant %', p_user_id;
-    end if;
-
-    delete from user_languages where user_id = v_user.id;
+  if v_user.id is null then
+    raise exception 'unknown participant %', p_user_id;
   end if;
+
+  delete from user_languages where user_id = v_user.id;
+
+  insert into user_languages (user_id, language, fluency)
+  select v_user.id, elem ->> 'language', elem ->> 'fluency'
+  from jsonb_array_elements(p_languages) as elem;
+
+  return to_jsonb(v_user);
+end;
+$$;
+
+-- ---------------------------------------------------------------------------
+-- create_account — one insert after userid, password, profile, and consent
+-- ---------------------------------------------------------------------------
+
+create function create_account(
+  p_userid text,
+  p_password_hash text,
+  p_name text,
+  p_age_range text,
+  p_gender text,
+  p_gender_other text,
+  p_country text,
+  p_ui_language text,
+  p_languages jsonb,
+  p_consent_version text
+) returns jsonb
+language plpgsql
+set search_path = public
+as $$
+declare
+  v_user users;
+begin
+  if jsonb_array_length(coalesce(p_languages, '[]'::jsonb)) < 1 then
+    raise exception 'at least one spoken language is required';
+  end if;
+
+  insert into users (
+    userid, password_hash, name, age_range, gender, gender_other,
+    country, ui_language, consent_version, consent_agreed, consent_at
+  )
+  values (
+    p_userid, p_password_hash, p_name, p_age_range, p_gender, p_gender_other,
+    p_country, p_ui_language, p_consent_version, true, now()
+  )
+  returning * into v_user;
 
   insert into user_languages (user_id, language, fluency)
   select v_user.id, elem ->> 'language', elem ->> 'fluency'
@@ -216,18 +251,22 @@ end;
 $$;
 
 -- ---------------------------------------------------------------------------
--- Useful read shape: one row per participant with languages + latest consent
+-- Useful read shape: one row per participant with languages + consent
 -- ---------------------------------------------------------------------------
 
 create view participant_overview as
 select
   u.id,
+  u.userid,
   u.name,
   u.age_range,
   u.gender,
   u.gender_other,
   u.country,
   u.ui_language,
+  u.consent_version,
+  u.consent_agreed,
+  u.consent_at,
   u.created_at,
   u.updated_at,
   coalesce(
@@ -241,38 +280,8 @@ select
     ),
     '[]'::jsonb
   ) as languages,
-  (
-    select jsonb_build_object(
-      'agreed', c.agreed,
-      'consent_version', c.consent_version,
-      'timestamp', c.timestamp
-    )
-    from consents c
-    where c.user_id = u.id
-    order by c.timestamp desc
-    limit 1
-  ) as latest_consent,
   (select count(*) from data d where d.user_id = u.id) as trial_count
 from users u;
-
--- ---------------------------------------------------------------------------
--- accounts — login identity; research rows stay on users and are linked here
--- ---------------------------------------------------------------------------
-
-create table accounts (
-  id             uuid primary key default gen_random_uuid(),
-  userid         text not null,
-  password_hash  text not null,
-  user_id        uuid unique references users (id) on delete set null,
-  created_at     timestamptz not null default now(),
-  constraint accounts_userid_format check (
-    char_length(userid) between 3 and 32
-    and userid ~ '^[A-Za-z0-9_]+$'
-  )
-);
-
-create unique index accounts_userid_lower_idx on accounts (lower(userid));
-create index accounts_user_id_idx on accounts (user_id);
 
 -- ---------------------------------------------------------------------------
 -- App role: OS user `hector` via peer auth on the Unix socket

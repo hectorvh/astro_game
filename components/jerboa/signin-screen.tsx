@@ -9,7 +9,7 @@ import { Panel } from './scene'
 import { FieldError, FieldLabel, TextInput } from './form-fields'
 
 export function SignInScreen() {
-  const { error, authStatus, goTo, submitSignUp } = useSession()
+  const { error, authStatus, credentials, goTo, submitSignUp } = useSession()
   const {
     register,
     handleSubmit,
@@ -17,7 +17,10 @@ export function SignInScreen() {
   } = useForm<Credentials>({
     resolver: zodResolver(credentialsSchema),
     mode: 'onSubmit',
-    defaultValues: { userid: '', password: '' },
+    defaultValues: {
+      userid: credentials?.userid ?? '',
+      password: credentials?.password ?? '',
+    },
   })
 
   const blocked = isSubmitting || authStatus !== 'ready'
