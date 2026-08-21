@@ -11,7 +11,7 @@
         height: 100%;
         margin: 0;
         overflow: hidden;
-        background: #231F20;
+        background: #0c1220;
       }
       #unity-container,
       #unity-container.unity-desktop,
@@ -28,18 +28,96 @@
         width: 100%;
         height: 100%;
         display: block;
-        background: #231F20;
+        background: #0c1220;
         outline: none;
       }
-      #unity-footer {
-        display: none;
+      #unity-footer,
+      #unity-loading-bar {
+        display: none !important;
+      }
+
+      #game-loading {
+        position: absolute;
+        inset: 0;
+        z-index: 30;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1.25rem;
+        padding: 2rem;
+        background:
+          radial-gradient(ellipse 80% 50% at 50% 0%, rgba(47, 216, 255, 0.12), transparent 55%),
+          radial-gradient(ellipse 60% 40% at 80% 80%, rgba(194, 79, 224, 0.1), transparent 50%),
+          #0c1220;
+        color: #e8f4ff;
+        font-family: ui-sans-serif, system-ui, sans-serif;
+        opacity: 1;
+        visibility: visible;
+        transition: opacity 0.8s ease, visibility 0.8s ease;
+      }
+      #game-loading.is-done {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+      }
+      #game-loading-kicker {
+        margin: 0;
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: #2fd8ff;
+      }
+      #game-loading-title {
+        margin: 0;
+        font-size: clamp(2rem, 6vw, 3.25rem);
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        line-height: 1;
+        color: #c24fe0;
+        text-shadow: 0 0 18px rgba(47, 216, 255, 0.35);
+      }
+      #game-loading-status {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 600;
+        color: #9aa8b8;
+      }
+      #game-loading-track {
+        width: min(22rem, 78vw);
+        height: 0.55rem;
+        overflow: hidden;
+        border-radius: 999px;
+        background: #2a2f3a;
+        box-shadow: inset 0 0 0 1px rgba(47, 216, 255, 0.2);
+      }
+      #game-loading-fill {
+        width: 0%;
+        height: 100%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, #00c8ff, #2fe8b0);
+        transition: width 0.18s ease-out;
+      }
+      #game-loading-pct {
+        margin: 0;
+        font-variant-numeric: tabular-nums;
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #2fd8ff;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #game-loading,
+        #game-loading-fill {
+          transition: none;
+        }
       }
     </style>
   </head>
   <body>
     <div id="unity-container" class="unity-desktop">
       <canvas id="unity-canvas" tabindex="0"></canvas>
-      <div id="unity-loading-bar">
+      <div id="unity-loading-bar" hidden>
         <div id="unity-logo"></div>
         <div id="unity-progress-bar-empty">
           <div id="unity-progress-bar-full"></div>
@@ -47,11 +125,27 @@
       </div>
       <div id="unity-warning"></div>
       <div id="unity-footer"></div>
+      <div id="game-loading" role="status" aria-live="polite" aria-label="Loading Jupiter Run">
+        <p id="game-loading-kicker">Laika Odyssey</p>
+        <h1 id="game-loading-title">Jupiter Run</h1>
+        <p id="game-loading-status">Loading spacecraft systems…</p>
+        <div id="game-loading-track">
+          <div id="game-loading-fill"></div>
+        </div>
+        <p id="game-loading-pct">0%</p>
+      </div>
     </div>
     <script>
       var canvas = document.querySelector("#unity-canvas");
       canvas.setAttribute("tabindex", "0");
       canvas.focus();
+
+      var overlay = document.querySelector("#game-loading");
+      var fill = document.querySelector("#game-loading-fill");
+      var pctLabel = document.querySelector("#game-loading-pct");
+      var statusLabel = document.querySelector("#game-loading-status");
+      // Unity Personal splash plays after createUnityInstance resolves (~2s).
+      var SPLASH_MASK_MS = 2800;
 
       var gameKeys = {
         ArrowLeft: true,
@@ -82,6 +176,27 @@
         },
         true,
       );
+
+      function setProgress(progress) {
+        var pct = Math.max(0, Math.min(100, Math.round(progress * 100)));
+        fill.style.width = pct + "%";
+        pctLabel.textContent = pct + "%";
+      }
+
+      function hideOverlay() {
+        overlay.classList.add("is-done");
+        overlay.addEventListener(
+          "transitionend",
+          function () {
+            overlay.style.display = "none";
+          },
+          { once: true },
+        );
+        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+          overlay.style.display = "none";
+        }
+        canvas.focus();
+      }
 
       function unityShowBanner(msg, type) {
         var warningBanner = document.querySelector("#unity-warning");
@@ -122,18 +237,18 @@
         canvas.className = "unity-mobile";
       }
 
-      document.querySelector("#unity-loading-bar").style.display = "block";
-
       var script = document.createElement("script");
       script.src = loaderUrl;
       script.onload = function () {
         createUnityInstance(canvas, config, function (progress) {
-          document.querySelector("#unity-progress-bar-full").style.width = 100 * progress + "%";
+          setProgress(progress);
         }).then(function () {
-          document.querySelector("#unity-loading-bar").style.display = "none";
-          canvas.focus();
+          setProgress(1);
+          statusLabel.textContent = "Starting Jupiter Run…";
+          setTimeout(hideOverlay, SPLASH_MASK_MS);
         }).catch(function (message) {
-          alert(message);
+          statusLabel.textContent = message || "Could not start Jupiter Run.";
+          pctLabel.textContent = "";
         });
       };
       document.body.appendChild(script);
