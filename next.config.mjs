@@ -14,7 +14,17 @@ const nextConfig = {
     return [
       {
         source: '/game-build/:path*.wasm',
-        headers: [{ key: 'Content-Type', value: 'application/wasm' }],
+        headers: [
+          { key: 'Content-Type', value: 'application/wasm' },
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+        ],
+      },
+      {
+        source: '/game-build/:path*.data',
+        headers: [
+          { key: 'Content-Type', value: 'application/octet-stream' },
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+        ],
       },
     ]
   },

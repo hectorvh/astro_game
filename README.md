@@ -145,7 +145,7 @@ pnpm db:psql          # open a SQL shell on database jerboa
 pnpm build && pnpm start   # production server on port 3000
 ```
 
-This is **not** a static export. API routes need a Node server (`pnpm dev` or `pnpm start`). A Netlify deploy uses `@netlify/plugin-nextjs` with `NEXT_PUBLIC_JERBOA_BACKEND=memory` (UI only; answers are not persisted). Leave the Netlify **Base directory** empty — the app lives at the repo root.
+This is **not** a static export. API routes need a Node server (`pnpm dev` or `pnpm start`). A Netlify deploy uses `@netlify/plugin-nextjs` with **Build command** `pnpm run build:netlify` (copies the Unity WebGL files into `public/game-build`, then `next build`) and `NEXT_PUBLIC_JERBOA_BACKEND=memory` (UI only; answers are not persisted). Leave **Base directory** and **Publish directory** empty — the app lives at the repo root and the Next plugin owns the publish folder.
 
 ### Option C — Supabase
 
