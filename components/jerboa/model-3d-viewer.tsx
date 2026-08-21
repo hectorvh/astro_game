@@ -98,5 +98,5 @@ export function Model3dViewer({
   )
 }
 
-useGLTF.preload('/3d/Jerboa_Creature.glb')
+useGLTF.preload('/3d/Captain_Laika.glb')
 useGLTF.preload('/3d/Blue_Bird.glb')

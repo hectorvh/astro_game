@@ -4,15 +4,14 @@ import { useState } from 'react'
 import { ChevronLeft, Flag, MessageCircle, Settings, Sparkles, Star } from 'lucide-react'
 import { useSession } from '@/lib/jerboa/session-context'
 
-// Landmark nodes along the curved desert path (percent coordinates on the
-// terrain image). Start = cactus/burrow (lower-left) → goal = oasis (upper-right).
-// Each node will host a mini-game (out of scope for the mock, spec §1).
+// Landmark nodes along the flight path toward Jupiter.
+// Start (lower-left) → Jupiter (upper-right). Node 1 is Jupiter Run.
 const NODES = [
-  { id: 1, label: 'The Watchful Bird', x: 20, y: 62 },
-  { id: 2, label: 'Whispering Dunes', x: 40, y: 74 },
-  { id: 3, label: 'Crystal Hollow', x: 55, y: 48 },
-  { id: 4, label: 'Old Stone Temple', x: 74, y: 60 },
-  { id: 5, label: 'The Oasis', x: 84, y: 30 },
+  { id: 1, label: 'Jupiter Run', x: 20, y: 62 },
+  { id: 2, label: 'Asteroid Belt', x: 40, y: 74 },
+  { id: 3, label: 'Europa Drift', x: 55, y: 48 },
+  { id: 4, label: "Io Station", x: 74, y: 60 },
+  { id: 5, label: 'Jupiter', x: 84, y: 30 },
 ]
 
 const PATH_D = 'M 10 84 L 20 62 L 40 74 L 55 48 L 74 60 L 84 30'
@@ -25,23 +24,23 @@ export function MapScreen() {
 
   return (
     <main className="relative min-h-dvh w-full overflow-hidden bg-background">
-      {/* Terrain */}
+      {/* Starfield / Jupiter backdrop */}
       <div
         aria-hidden="true"
         className="absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: "url('/images/map-terrain.webp')" }}
+        style={{ backgroundImage: "url('/images/Gemini_Generated_Image_gjhy10gjhy10gjhy.jpeg')" }}
       />
-      <div aria-hidden="true" className="absolute inset-0 bg-background/10" />
+      <div aria-hidden="true" className="absolute inset-0 bg-background/25" />
 
       {/* Top bar */}
       <div className="relative z-20 flex items-start justify-between gap-3 p-4 sm:p-6">
-        <div className="max-w-md rounded-2xl border-2 border-secondary/40 bg-card/90 p-4 shadow-storybook backdrop-blur-sm">
+        <div className="max-w-md rounded-2xl border-2 border-primary/40 bg-card/90 p-4 shadow-storybook backdrop-blur-sm">
           <h1 className="font-display text-2xl font-bold text-purple sm:text-3xl">
-            Jerboa&apos;s Journey
+            Laika Odyssey
           </h1>
           <p className="mt-1 text-base leading-snug text-muted-foreground text-pretty">
-            Help Jerboa cross the desert! Reach each stop and use your communication skills to
-            solve friendly challenges.
+            Help Laika fly to Jupiter! Reach each stop and use your communication skills to solve
+            friendly challenges.
           </p>
         </div>
         <div className="flex flex-col gap-2">
@@ -49,7 +48,7 @@ export function MapScreen() {
             type="button"
             onClick={() => goTo('title')}
             aria-label="Back to title screen"
-            className="flex size-12 items-center justify-center rounded-2xl border-2 border-secondary/40 bg-card/90 text-foreground shadow-storybook backdrop-blur-sm transition-colors hover:bg-muted"
+            className="flex size-12 items-center justify-center rounded-2xl border-2 border-primary/40 bg-card/90 text-foreground shadow-storybook backdrop-blur-sm transition-colors hover:bg-muted"
           >
             <ChevronLeft className="size-6" />
           </button>
@@ -57,7 +56,7 @@ export function MapScreen() {
             type="button"
             onClick={() => goTo('settings')}
             aria-label="Settings — edit your details"
-            className="flex size-12 items-center justify-center rounded-2xl border-2 border-secondary/40 bg-card/90 text-foreground shadow-storybook backdrop-blur-sm transition-colors hover:bg-muted"
+            className="flex size-12 items-center justify-center rounded-2xl border-2 border-primary/40 bg-card/90 text-foreground shadow-storybook backdrop-blur-sm transition-colors hover:bg-muted"
           >
             <Settings className="size-6" />
           </button>
@@ -75,19 +74,19 @@ export function MapScreen() {
           <path
             d={PATH_D}
             fill="none"
-            stroke="var(--card)"
+            stroke="var(--lane-cyan)"
             strokeWidth="1.6"
             strokeLinecap="round"
             strokeLinejoin="round"
             strokeDasharray="0.2 3"
-            opacity="0.9"
+            opacity="0.7"
           />
         </svg>
 
         {/* Start marker */}
         <Marker x={10} y={84}>
           <div className="flex flex-col items-center">
-            <span className="rounded-full bg-clay px-3 py-1 text-xs font-bold text-primary-foreground shadow-storybook">
+            <span className="rounded-full bg-clay px-3 py-1 text-xs font-bold text-hud-text shadow-storybook">
               START
             </span>
           </div>
@@ -121,34 +120,19 @@ export function MapScreen() {
         ))}
       </div>
 
-      {/* Jerboa at the start — tap to open the 3D view */}
+      {/* Laika at the start — tap to open the 3D view */}
       <div className="pointer-events-none absolute inset-0 z-[21]">
         <Marker x={10} y={72}>
           <button
             type="button"
             onClick={() => goTo('jerboa3d')}
-            aria-label="Open a 3D view of Jerboa"
+            aria-label="Open a 3D view of Laika"
             className="pointer-events-auto bg-transparent"
           >
             <img
-              src="/images/jerboa.webp"
+              src="/images/Astro_CorgiPilot1-removebg-preview.png"
               alt=""
-              className="jerboa-cutout w-80 animate-bob drop-shadow-[0_12px_12px_rgba(63,47,30,0.3)] sm:w-96"
-            />
-          </button>
-        </Marker>
-        <Marker x={84} y={16}>
-          <button
-            type="button"
-            onClick={() => goTo('bird3d')}
-            aria-label="Open a 3D view of the blue bird"
-            className="pointer-events-auto bg-transparent"
-          >
-            <img
-              src="/images/bird01.png"
-              alt=""
-              className="bird-cutout w-40 animate-bob drop-shadow-[0_12px_12px_rgba(63,47,30,0.3)] sm:w-48"
-              style={{ animationDelay: '0.8s' }}
+              className="w-36 animate-bob drop-shadow-[0_12px_18px_rgba(0,0,0,0.55)] sm:w-44"
             />
           </button>
         </Marker>
@@ -156,7 +140,7 @@ export function MapScreen() {
 
       {/* Footer hint */}
       <div className="absolute inset-x-0 bottom-0 z-20 flex justify-center p-4 sm:p-6">
-        <div className="flex max-w-md flex-col gap-1 rounded-2xl border-2 border-secondary/40 bg-card/90 px-5 py-3 text-sm shadow-storybook backdrop-blur-sm">
+        <div className="flex max-w-md flex-col gap-1 rounded-2xl border-2 border-primary/40 bg-card/90 px-5 py-3 text-sm shadow-storybook backdrop-blur-sm">
           <span className="flex items-center gap-2 font-semibold text-foreground">
             <Star className="size-4 text-secondary" />
             Each stop brings a new task.
@@ -165,20 +149,19 @@ export function MapScreen() {
             <MessageCircle className="size-4 text-primary" />
             {participant?.name
               ? `Ready when you are, ${participant.name}!`
-              : 'Use your communication skills to help Jerboa!'}
+              : 'Use your communication skills to help Laika!'}
           </span>
         </div>
       </div>
 
-      {/* Node detail overlay (mini-games are out of scope for the mock) */}
       {activeNode ? (
         <div
-          className="absolute inset-0 z-30 flex items-center justify-center bg-foreground/40 p-4 backdrop-blur-sm"
+          className="absolute inset-0 z-30 flex items-center justify-center bg-black/55 p-4 backdrop-blur-sm"
           role="dialog"
           aria-modal="true"
           aria-labelledby="node-title"
         >
-          <div className="w-full max-w-sm rounded-3xl border-2 border-secondary/40 bg-card p-6 text-center shadow-storybook">
+          <div className="w-full max-w-sm rounded-3xl border-2 border-primary/40 bg-card p-6 text-center shadow-storybook">
             <span className="mx-auto mb-3 flex size-14 items-center justify-center rounded-full bg-primary/12 text-primary">
               <Sparkles className="size-7" />
             </span>
@@ -189,8 +172,8 @@ export function MapScreen() {
               {activeNode.label}
             </h2>
             <p className="mb-6 text-lg leading-relaxed text-muted-foreground">
-              This is where a mini-game will live. The tasks are coming soon — for now, the trail
-              is just for exploring.
+              This is where a mini-game will live. The tasks are coming soon — for now, the flight
+              path is just for exploring.
             </p>
             <button
               type="button"

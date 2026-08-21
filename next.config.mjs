@@ -10,6 +10,14 @@ const nextConfig = {
     unoptimized: true,
   },
   transpilePackages: ['three', '@react-three/fiber', '@react-three/drei'],
+  async headers() {
+    return [
+      {
+        source: '/game-build/:path*.wasm',
+        headers: [{ key: 'Content-Type', value: 'application/wasm' }],
+      },
+    ]
+  },
 }
 
 export default nextConfig

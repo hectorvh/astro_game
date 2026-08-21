@@ -30,15 +30,14 @@ export function InformationScreen() {
           sheet the research team will supply (spec §3, Screen 2). */}
       <div className="space-y-4 rounded-2xl bg-background/60 p-5 text-lg leading-relaxed text-foreground sm:p-6">
         <p>
-          Thank you for your interest in <strong>{"Jerboa's Journey"}</strong>. This study is
-          part of a research project about <strong>spatial communication</strong> — how people
-          describe where things are and how they move.
+          Thank you for your interest in <strong>Laika Odyssey: A Spatial Adventure</strong>. This
+          study is part of a research project about <strong>spatial communication</strong> — how
+          people describe where things are and how they move.
         </p>
         <p>
-          During the game you will help a little desert jerboa travel from its home at the
-          cactus, across the desert, to a cool blue oasis. Along the way you will complete a few
-          short, friendly tasks. There are no right or wrong answers to worry about, and there is
-          no timer you need to beat.
+          During the game you will help Laika, a cartoon dog in a little spacecraft, fly through
+          space toward Jupiter. Along the way you will complete a few short, friendly tasks. There
+          are no right or wrong answers to worry about, and there is no timer you need to beat.
         </p>
         <p>
           Taking part is completely voluntary, and you can stop at any point. On the next screen

@@ -23,7 +23,7 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
 
-  /* Extra desert-theme brand tokens (re-skinnable per biome) */
+  /* Space-theme brand tokens (Laika Odyssey / Jupiter Run) */
   --color-sand: var(--sand);
   --color-sand-deep: var(--sand-deep);
   --color-teal: var(--teal);
@@ -34,9 +34,16 @@
   --color-amber-dark: var(--amber-dark);
   --color-clay: var(--clay);
   --color-crystal: var(--crystal);
+  --color-lane-cyan: var(--lane-cyan);
+  --color-portal-mint: var(--portal-mint);
+  --color-portal-magenta: var(--portal-magenta);
+  --color-portal-indigo: var(--portal-indigo);
+  --color-portal-amber: var(--portal-amber);
+  --color-jupiter: var(--jupiter);
+  --color-hud-text: var(--hud-text);
 
   --font-sans: var(--font-nunito), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-baloo), var(--font-nunito), ui-sans-serif, sans-serif;
+  --font-display: var(--font-baloo), var(--font-nunito), ui-sans-serif, system-ui, sans-serif;
 
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
@@ -47,39 +54,63 @@
 }
 
 :root {
-  color-scheme: light;
+  color-scheme: dark;
 
-  /* Desert biome palette (sampled from prototype) */
-  --sand: #f3e9d2;
-  --sand-deep: #ead9b8;
-  --teal: #2e8b8b;
-  --teal-dark: #1f7a7a;
-  --purple: #6b4e9e;
-  --purple-dark: #5a3e8b;
-  --amber: #e0a43b;
-  --amber-dark: #d99a2b;
-  --clay: #b5654a;
-  --crystal: #8fa8d8;
+  /* Space / environment */
+  --space-void: #0c1220;
+  --nebula-violet: #6b4e7a;
+  --nebula-teal: #4a8a6f;
+  --jupiter: #c9915a;
+  --starfield-white: #ffffff;
 
-  --background: #f3e9d2;
-  --foreground: #3f2f1e;
-  --card: #fbf5e6;
-  --card-foreground: #3f2f1e;
-  --popover: #fbf5e6;
-  --popover-foreground: #3f2f1e;
-  --primary: #2e8b8b;
-  --primary-foreground: #fbf5e6;
-  --secondary: #e0a43b;
-  --secondary-foreground: #3f2f1e;
-  --muted: #ead9b8;
-  --muted-foreground: #75634c;
-  --accent: #6b4e9e;
-  --accent-foreground: #fbf5e6;
-  --destructive: #d9534f;
-  --destructive-foreground: #fbf5e6;
-  --border: #d8c4a0;
-  --input: #d8c4a0;
-  --ring: #2e8b8b;
+  /* Ship interior */
+  --hull-gunmetal: #2a2f38;
+  --hull-highlight: #6b7280;
+  --hull-warning-accent: #d94f4f;
+
+  /* Portals / lane UI */
+  --lane-cyan: #2fd8ff;
+  --portal-mint: #2fe8b0;
+  --portal-magenta: #c24fe0;
+  --portal-indigo: #4a6ff0;
+  --portal-amber: #ff9d2e;
+
+  /* Status / feedback */
+  --feedback-negative: #e85a4d;
+  --hearts-track: #2a2f3a;
+  --hud-text: #e8f4ff;
+
+  /* Mapped onto existing utility names so screens keep working */
+  --sand: #0c1220;
+  --sand-deep: #1a2233;
+  --teal: #00c8ff;
+  --teal-dark: #00a8d8;
+  --purple: #c24fe0;
+  --purple-dark: #9a3bc0;
+  --amber: #ff9d2e;
+  --amber-dark: #e08920;
+  --clay: #a6663b;
+  --crystal: #2fd8ff;
+
+  --background: #0c1220;
+  --foreground: #e8f4ff;
+  --card: #1a2233;
+  --card-foreground: #e8f4ff;
+  --popover: #1a2233;
+  --popover-foreground: #e8f4ff;
+  --primary: #00c8ff;
+  --primary-foreground: #0a0e1a;
+  --secondary: #ff9d2e;
+  --secondary-foreground: #0a0e1a;
+  --muted: #2a2f38;
+  --muted-foreground: #9aa8b8;
+  --accent: #c24fe0;
+  --accent-foreground: #e8f4ff;
+  --destructive: #e85a4d;
+  --destructive-foreground: #e8f4ff;
+  --border: #3d4450;
+  --input: #3d4450;
+  --ring: #2fd8ff;
 
   --radius: 1rem;
 }
@@ -94,29 +125,12 @@
 }
 
 @layer utilities {
-  /* Soft, tactile storybook drop shadow used on panels + buttons */
   .shadow-storybook {
-    box-shadow: 0 10px 25px -8px rgba(63, 47, 30, 0.28);
+    box-shadow: 0 10px 28px -8px rgba(0, 0, 0, 0.55);
   }
   .text-shadow-soft {
-    text-shadow: 0 2px 0 rgba(255, 255, 255, 0.55);
+    text-shadow: 0 0 18px rgba(47, 216, 255, 0.45);
   }
-  /* Blend a flat-background character illustration into a scene: the cream
-     backdrop multiplies away and the square edges fade out via a mask. */
-  .jerboa-cutout {
-    mix-blend-mode: multiply;
-    -webkit-mask-image: radial-gradient(
-      ellipse 64% 70% at 50% 56%,
-      #000 55%,
-      transparent 88%
-    );
-    mask-image: radial-gradient(
-      ellipse 64% 70% at 50% 56%,
-      #000 55%,
-      transparent 88%
-    );
-  }
-  /* Knock out the black plate behind the bird illustration. */
   .bird-cutout {
     mix-blend-mode: screen;
     -webkit-mask-image: radial-gradient(
@@ -132,7 +146,6 @@
   }
 }
 
-/* Respect reduced motion for parallax / idle animations */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -143,7 +156,7 @@
   }
 }
 
-@keyframes jerboa-bob {
+@keyframes nova-bob {
   0%,
   100% {
     transform: translateY(0);
@@ -153,7 +166,7 @@
   }
 }
 .animate-bob {
-  animation: jerboa-bob 3.2s ease-in-out infinite;
+  animation: nova-bob 3.2s ease-in-out infinite;
 }
 
 @keyframes float-slow {

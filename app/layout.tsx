@@ -34,14 +34,14 @@ const baloo = localFont({
 })
 
 export const metadata: Metadata = {
-  title: "Jerboa's Journey",
+  title: 'Laika Odyssey: A Spatial Adventure',
   description:
-    "A gamified spatial-language research instrument. Help Jerboa cross the desert while taking part in the SCALA study.",
+    'A gamified spatial-language research instrument. Help Laika fly toward Jupiter while taking part in the SCALA study.',
 }
 
 export const viewport: Viewport = {
-  colorScheme: 'light',
-  themeColor: '#f3e9d2',
+  colorScheme: 'dark',
+  themeColor: '#0c1220',
 }
 
 export default function RootLayout({

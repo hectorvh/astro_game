@@ -1,13 +1,13 @@
 'use client'
 
-import { ArrowRight, Languages, LogIn, UserPlus } from 'lucide-react'
+import { Languages, LogIn, Rocket, UserPlus } from 'lucide-react'
 import { UI_LANGUAGES } from '@/lib/jerboa/constants'
 import { useSession } from '@/lib/jerboa/session-context'
 import { Panel } from './scene'
 import { FieldLabel, NativeSelect } from './form-fields'
 
 export function WelcomeScreen() {
-  const { startLogIn, startSignIn, draft, authStatus, error, patchDraft } = useSession()
+  const { startLogIn, startSignIn, enterAsGuest, draft, authStatus, error, patchDraft } = useSession()
   const uiLanguage = draft?.uiLanguage ?? 'en'
   const blocked = authStatus !== 'ready'
 
@@ -20,9 +20,12 @@ export function WelcomeScreen() {
       <p className="mb-2 text-sm font-bold tracking-widest text-primary uppercase">
         Welcome
       </p>
-      <h1 className="mb-8 font-display text-4xl font-bold text-purple text-balance sm:text-5xl">
-        {"Jerboa's Journey"}
+      <h1 className="mb-2 font-display text-4xl font-bold text-purple text-balance sm:text-5xl">
+        {"Laika Odyssey"}
       </h1>
+      <p className="mb-8 text-base font-semibold text-muted-foreground">
+        A Spatial Adventure
+      </p>
 
       {error ? (
         <p
@@ -53,6 +56,14 @@ export function WelcomeScreen() {
         >
           <UserPlus className="size-6" />
           Sign In
+        </button>
+        <button
+          type="button"
+          onClick={enterAsGuest}
+          className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-secondary px-6 text-xl font-bold text-secondary-foreground shadow-storybook transition-transform hover:bg-amber-dark active:translate-y-px"
+        >
+          <Rocket className="size-6" />
+          Access as Guest
         </button>
       </div>
 

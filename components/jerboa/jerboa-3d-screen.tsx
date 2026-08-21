@@ -5,9 +5,9 @@ import { Model3dScreen } from './model-3d-screen'
 export function Jerboa3dScreen() {
   return (
     <Model3dScreen
-      modelSrc="/3d/Jerboa_Creature.glb"
-      title="Jerboa"
-      label="Jerboa"
+      modelSrc="/3d/Captain_Laika.glb"
+      title="Laika"
+      label="Laika"
       rotation={[0, Math.PI * 1.1, 0]}
     />
   )

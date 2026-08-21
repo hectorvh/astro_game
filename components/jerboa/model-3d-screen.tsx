@@ -27,7 +27,7 @@ export function Model3dScreen({
       <div
         aria-hidden="true"
         className="absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: "url('/images/desert-hero.webp')" }}
+        style={{ backgroundImage: "url('/images/Gemini_Generated_Image_gjhy10gjhy10gjhy.jpeg')" }}
       />
       <div
         aria-hidden="true"
@@ -44,11 +44,11 @@ export function Model3dScreen({
             type="button"
             onClick={() => goTo('map')}
             aria-label="Back to map"
-            className="pointer-events-auto flex size-12 items-center justify-center rounded-2xl border-2 border-secondary/40 bg-card/90 text-foreground shadow-storybook backdrop-blur-sm transition-colors hover:bg-muted"
+            className="pointer-events-auto flex size-12 items-center justify-center rounded-2xl border-2 border-primary/40 bg-card/90 text-foreground shadow-storybook backdrop-blur-sm transition-colors hover:bg-muted"
           >
             <ChevronLeft className="size-6" />
           </button>
-          <div className="rounded-2xl border-2 border-secondary/40 bg-card/90 px-4 py-3 shadow-storybook backdrop-blur-sm">
+            <div className="rounded-2xl border-2 border-primary/40 bg-card/90 px-4 py-3 shadow-storybook backdrop-blur-sm">
             <h1 className="font-display text-2xl font-bold text-purple">{title}</h1>
             <p className="text-sm font-semibold text-muted-foreground">
               Drag to rotate · scroll or pinch to zoom

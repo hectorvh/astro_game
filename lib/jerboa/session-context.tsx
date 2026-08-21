@@ -50,12 +50,14 @@ interface SessionContextValue {
   draft: Partial<OnboardingValues> | null
   credentials: Credentials | null
   consentGiven: boolean
+  isGuest: boolean
   error: string | null
   authStatus: AuthStatus
   goTo: (step: Step) => void
   patchDraft: (partial: Partial<OnboardingValues>) => void
   startLogIn: () => Promise<void>
   startSignIn: () => Promise<void>
+  enterAsGuest: () => void
   submitSignUp: (credentials: Credentials) => Promise<void>
   submitLogIn: (credentials: Credentials) => Promise<void>
   submitOnboarding: (values: OnboardingValues) => Promise<void>
@@ -90,6 +92,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [draft, setDraft] = useState<Partial<OnboardingValues> | null>(null)
   const [credentials, setCredentials] = useState<Credentials | null>(null)
   const [consentGiven, setConsentGiven] = useState(false)
+  const [isGuest, setIsGuest] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [authStatus, setAuthStatus] = useState<AuthStatus>('pending')
 
@@ -126,6 +129,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     setParticipant(null)
     setCredentials(null)
     setConsentGiven(false)
+    setIsGuest(false)
     setDraft(uiLanguage ? { uiLanguage } : null)
     await startFreshAnonymousSession()
   }, [draft?.uiLanguage])
@@ -149,6 +153,15 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       setError(messageFor(cause))
     }
   }, [dropAccount, goTo])
+
+  const enterAsGuest = useCallback(() => {
+    setError(null)
+    setParticipant(null)
+    setCredentials(null)
+    setConsentGiven(false)
+    setIsGuest(true)
+    goTo('title')
+  }, [goTo])
 
   const submitSignUp = useCallback(
     async (values: Credentials) => {
@@ -174,6 +187,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         setCredentials(null)
         setParticipant(session.participant)
         setConsentGiven(session.consentGiven)
+        setIsGuest(false)
         if (session.participant) setDraft(profileDraft(session.participant))
         goTo('title')
       } catch (cause) {
@@ -240,6 +254,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         setCredentials(null)
         setParticipant(session.participant)
         setConsentGiven(true)
+        setIsGuest(false)
         if (session.participant) setDraft(profileDraft(session.participant))
         goTo('title')
       } catch (cause) {
@@ -254,6 +269,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     setDraft(null)
     setCredentials(null)
     setConsentGiven(false)
+    setIsGuest(false)
     setAuthStatus('pending')
     goTo('welcome')
     startFreshAnonymousSession()
@@ -271,12 +287,14 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       draft,
       credentials,
       consentGiven,
+      isGuest,
       error,
       authStatus,
       goTo,
       patchDraft,
       startLogIn,
       startSignIn,
+      enterAsGuest,
       submitSignUp,
       submitLogIn,
       submitOnboarding,
@@ -290,12 +308,14 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       draft,
       credentials,
       consentGiven,
+      isGuest,
       error,
       authStatus,
       goTo,
       patchDraft,
       startLogIn,
       startSignIn,
+      enterAsGuest,
       submitSignUp,
       submitLogIn,
       submitOnboarding,

@@ -38,11 +38,11 @@ export function TitleScreen() {
 
   return (
     <main className="relative flex min-h-dvh w-full items-center justify-center overflow-hidden">
-      {/* Layered parallax desert backdrop */}
+      {/* Layered parallax space backdrop */}
       <div
         aria-hidden="true"
         className="absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: "url('/images/desert-hero.webp')" }}
+        style={{ backgroundImage: "url('/images/Gemini_Generated_Image_gjhy10gjhy10gjhy.jpeg')" }}
       />
       <div
         aria-hidden="true"
@@ -56,23 +56,23 @@ export function TitleScreen() {
           {/* Ground contact shadow so the character reads as standing, not floating */}
           <div
             aria-hidden="true"
-            className="absolute bottom-3 left-1/2 h-4 w-40 -translate-x-1/2 rounded-[50%] bg-foreground/25 blur-md md:w-52"
+            className="absolute bottom-3 left-1/2 h-4 w-24 -translate-x-1/2 rounded-[50%] bg-foreground/25 blur-md md:w-28"
           />
           <img
-            src="/images/jerboa.webp"
-            alt="Jerboa, a friendly long-eared desert rodent, standing and ready for adventure"
-            className="jerboa-cutout relative w-64 md:w-80"
+            src="/images/Astro_CorgiPilot1-removebg-preview.png"
+            alt="Laika, a cartoon dog wearing goggles and piloting a small green flying saucer"
+            className="relative w-36 md:w-44"
           />
         </div>
 
         {/* Title + menu */}
         <div className="flex w-full max-w-md flex-col items-center text-center md:order-1 md:items-start md:text-left">
           <h1 className="font-display text-6xl font-bold leading-none text-balance sm:text-7xl">
-            <span className="block text-purple text-shadow-soft">Jerboa&apos;s</span>
-            <span className="block text-primary text-shadow-soft">Journey</span>
+            <span className="block text-purple text-shadow-soft">Laika</span>
+            <span className="block text-primary text-shadow-soft">Odyssey</span>
           </h1>
           <p className="mt-3 mb-8 rounded-full bg-card/80 px-4 py-1.5 text-base font-semibold text-muted-foreground shadow-sm">
-            a spatial communication adventure
+            a spatial adventure
           </p>
 
           <nav className="flex w-full flex-col gap-3" aria-label="Main menu">
@@ -93,12 +93,12 @@ export function TitleScreen() {
 
       {overlay ? (
         <div
-          className="absolute inset-0 z-20 flex items-center justify-center bg-foreground/40 p-4 backdrop-blur-sm"
+          className="absolute inset-0 z-20 flex items-center justify-center bg-black/55 p-4 backdrop-blur-sm"
           role="dialog"
           aria-modal="true"
           aria-labelledby="overlay-title"
         >
-          <div className="w-full max-w-md rounded-3xl border-2 border-secondary/40 bg-card p-6 shadow-storybook sm:p-8">
+          <div className="w-full max-w-md rounded-3xl border-2 border-primary/40 bg-card p-6 shadow-storybook sm:p-8">
             <div className="mb-3 flex items-center justify-between">
               <h2 id="overlay-title" className="font-display text-2xl font-bold text-purple">
                 {overlay === 'about' ? 'About the Experiment' : 'Leave the adventure?'}
@@ -114,15 +114,15 @@ export function TitleScreen() {
             </div>
             {overlay === 'about' ? (
               <p className="text-lg leading-relaxed text-foreground">
-                {"Jerboa's Journey"} is a research instrument from the SCALA project (Spatial
-                Communication and Ageing across Languages). By playing, you help researchers learn
-                how people from different languages and cultures describe space. Your data is
-                anonymised and used for research only.
+                Laika Odyssey: A Spatial Adventure is a research instrument from the SCALA project
+                (Spatial Communication and Ageing across Languages). By playing, you help
+                researchers learn how people from different languages and cultures describe space.
+                Your data is anonymised and used for research only.
               </p>
             ) : (
               <div>
                 <p className="mb-6 text-lg leading-relaxed text-foreground">
-                  Thank you for helping Jerboa! You can return to the start at any time.
+                  Thank you for helping Laika! You can return to the start at any time.
                 </p>
                 <button
                   type="button"

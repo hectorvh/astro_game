@@ -41,6 +41,7 @@ export function DetailsScreen({ mode }: { mode: 'signup' | 'settings' }) {
     error,
     authStatus,
     participant,
+    isGuest,
     goTo,
     submitOnboarding,
     submitSettings,
@@ -76,6 +77,28 @@ export function DetailsScreen({ mode }: { mode: 'signup' | 'settings' }) {
 
   const gender = watch('gender')
   const blocked = isSubmitting || authStatus !== 'ready'
+
+  if (mode === 'settings' && (isGuest || !participant)) {
+    return (
+      <Panel className="max-w-2xl text-center">
+        <h1 className="mb-3 font-display text-3xl font-bold text-purple text-balance sm:text-4xl">
+          Playing as a guest
+        </h1>
+        <p className="mb-6 text-lg leading-relaxed text-muted-foreground text-pretty">
+          Guest mode does not save any details. Sign in from the welcome screen if you want to take
+          part in the study.
+        </p>
+        <button
+          type="button"
+          onClick={() => goTo('title')}
+          className="mx-auto flex h-14 items-center justify-center gap-2 rounded-2xl border-2 border-input bg-background px-6 text-lg font-bold text-foreground transition-colors hover:bg-muted"
+        >
+          <ArrowLeft className="size-5" />
+          Back
+        </button>
+      </Panel>
+    )
+  }
 
   return (
     <Panel className="max-w-2xl">
