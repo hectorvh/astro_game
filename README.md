@@ -25,7 +25,7 @@ Writes
         └── memory    → in-tab Map (lost on reload)
 ```
 
-Jupiter Run is a Unity WebGL build under `game-build/`. The Next app embeds it in an iframe at `/game-build/play.html`. Locally, `public/game-build/Build` and `TemplateData` are symlinks into `game-build/`. Netlify copies those trees as real files during `pnpm run build:netlify` so the `.wasm` / `.data` are published.
+Jupiter Run is a Unity WebGL build under `game-buildV2/`. The Next app embeds it in an iframe at `/game-build/play.html`. Locally, `public/game-build/Build` and `TemplateData` are symlinks into `game-buildV2/`. Netlify copies those trees as real files during `pnpm run build:netlify` so the `.wasm` / `.data` are published.
 
 ### Layers
 
@@ -37,7 +37,7 @@ Jupiter Run is a Unity WebGL build under `game-build/`. The Next app embeds it i
 | Backend switch | `lib/jerboa/backend.ts` | Reads `NEXT_PUBLIC_JERBOA_BACKEND`. |
 | HTTP API | `app/api/...` | Used in **postgres** mode. The browser never talks to Postgres. |
 | Database | `db/local.sql` | Users, languages, trials. Existing databases: `pnpm db:merge`. |
-| Mini-game | `game-build/` + `public/game-build/play.html` | Unity WebGL (Jupiter Run). |
+| Mini-game | `game-buildV2/` + `public/game-build/play.html` | Unity WebGL (Jupiter Run). |
 
 **Postgres mode (local default):** Next.js route handlers use `pg` and Unix-socket peer auth. Identity is one httpOnly cookie (`jerboa_participant` = `users.id`). Passwords are stored as `scrypt` hashes, never in plaintext. A user row is written only when **Create account** succeeds at the end of sign-in.
 
@@ -170,6 +170,6 @@ Config lives in `netlify.toml`. The site is a Next.js app (not a static export) 
 | Node | 22 (`NODE_VERSION` in `netlify.toml`) |
 | Backend | `NEXT_PUBLIC_JERBOA_BACKEND=memory` (build-time; guest play only) |
 
-`pnpm run build:netlify` copies `game-build/Build` and `game-build/TemplateData` into `public/game-build` as real files (the git symlinks would 404 on the CDN), then runs `next build`. The first deploy is large (~95MB Unity `.wasm` + `.data`).
+`pnpm run build:netlify` copies `game-buildV2/Build` and `game-buildV2/TemplateData` into `public/game-build` as real files (the git symlinks would 404 on the CDN), then runs `next build`. The first deploy is large (~95MB Unity `.wasm` + `.data`).
 
 On the live site, use **Access as Guest**. Sign-in and trials are not persisted in memory mode. For a hosted database, use Option C (Supabase) instead of local Postgres.

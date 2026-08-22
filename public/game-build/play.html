@@ -12,6 +12,9 @@
         margin: 0;
         overflow: hidden;
         background: #0c1220;
+        touch-action: none;
+        -webkit-user-select: none;
+        user-select: none;
       }
       #unity-container,
       #unity-container.unity-desktop,
@@ -30,6 +33,7 @@
         display: block;
         background: #0c1220;
         outline: none;
+        touch-action: none;
       }
       #unity-footer,
       #unity-loading-bar {
@@ -112,6 +116,58 @@
           transition: none;
         }
       }
+
+      #touch-controls {
+        display: none;
+        position: absolute;
+        z-index: 20;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        align-items: flex-end;
+        justify-content: center;
+        gap: 1rem;
+        padding: 0.75rem 0.85rem 1.25rem;
+        pointer-events: none;
+      }
+      #touch-controls.is-on {
+        display: flex;
+      }
+      #touch-controls button {
+        pointer-events: auto;
+        flex: 0 0 auto;
+        min-width: 4.5rem;
+        min-height: 4.5rem;
+        padding: 0 1.1rem;
+        border: 2px solid rgba(47, 216, 255, 0.45);
+        border-radius: 1.25rem;
+        background: rgba(26, 34, 51, 0.82);
+        color: #e8f4ff;
+        font-family: ui-sans-serif, system-ui, sans-serif;
+        font-size: 1.7rem;
+        font-weight: 800;
+        line-height: 1;
+        backdrop-filter: blur(8px);
+        -webkit-tap-highlight-color: transparent;
+      }
+      #touch-controls button:active,
+      #touch-controls button.is-down {
+        background: rgba(0, 200, 255, 0.35);
+        border-color: #2fd8ff;
+      }
+      #touch-fire {
+        min-width: 5.5rem;
+        font-size: 0.95rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #0a0e1a;
+        background: rgba(47, 232, 176, 0.9);
+        border-color: #2fe8b0;
+      }
+      #touch-fire:active,
+      #touch-fire.is-down {
+        background: #2fe8b0;
+      }
     </style>
   </head>
   <body>
@@ -134,6 +190,11 @@
         </div>
         <p id="game-loading-pct">0%</p>
       </div>
+      <div id="touch-controls" aria-label="Touch controls">
+        <button type="button" id="touch-left" aria-label="Steer left">←</button>
+        <button type="button" id="touch-fire" aria-label="Fire laser">Fire</button>
+        <button type="button" id="touch-right" aria-label="Steer right">→</button>
+      </div>
     </div>
     <script>
       var canvas = document.querySelector("#unity-canvas");
@@ -144,8 +205,18 @@
       var fill = document.querySelector("#game-loading-fill");
       var pctLabel = document.querySelector("#game-loading-pct");
       var statusLabel = document.querySelector("#game-loading-status");
+      var touchPad = document.querySelector("#touch-controls");
+      var unityInstance = null;
       // Unity Personal splash plays after createUnityInstance resolves (~2s).
       var SPLASH_MASK_MS = 2800;
+      var KEY_HOLD_MS = 70;
+      var SWIPE_PX = 48;
+
+      var keyMap = {
+        left: { key: "ArrowLeft", code: "ArrowLeft", keyCode: 37 },
+        right: { key: "ArrowRight", code: "ArrowRight", keyCode: 39 },
+        fire: { key: " ", code: "Space", keyCode: 32 },
+      };
 
       var gameKeys = {
         ArrowLeft: true,
@@ -195,8 +266,122 @@
         if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
           overlay.style.display = "none";
         }
+        if (wantsTouchPad()) touchPad.classList.add("is-on");
         canvas.focus();
       }
+
+      function wantsTouchPad() {
+        return (
+          navigator.maxTouchPoints > 0 ||
+          window.matchMedia("(pointer: coarse)").matches ||
+          /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+        );
+      }
+
+      function emitKey(type, spec) {
+        var eventInit = {
+          key: spec.key,
+          code: spec.code,
+          keyCode: spec.keyCode,
+          which: spec.keyCode,
+          bubbles: true,
+          cancelable: true,
+          composed: true,
+        };
+        var event = new KeyboardEvent(type, eventInit);
+        try {
+          Object.defineProperty(event, "keyCode", { get: function () { return spec.keyCode; } });
+          Object.defineProperty(event, "which", { get: function () { return spec.keyCode; } });
+        } catch (err) {}
+        window.dispatchEvent(event);
+        document.dispatchEvent(event);
+        canvas.dispatchEvent(event);
+      }
+
+      function tapAction(name) {
+        var spec = keyMap[name];
+        emitKey("keydown", spec);
+        window.setTimeout(function () {
+          emitKey("keyup", spec);
+        }, KEY_HOLD_MS);
+        if (name === "fire" && unityInstance) {
+          ["Player", "PlayerControllerX", "Laika"].forEach(function (objectName) {
+            try {
+              unityInstance.SendMessage(objectName, "ShootBlasters");
+            } catch (err) {}
+          });
+        }
+      }
+
+      function bindHold(button, name) {
+        var held = false;
+        function down(event) {
+          event.preventDefault();
+          event.stopPropagation();
+          if (held) return;
+          held = true;
+          button.classList.add("is-down");
+          emitKey("keydown", keyMap[name]);
+        }
+        function up(event) {
+          if (event) event.preventDefault();
+          if (!held) return;
+          held = false;
+          button.classList.remove("is-down");
+          emitKey("keyup", keyMap[name]);
+        }
+        button.addEventListener("pointerdown", down);
+        button.addEventListener("pointerup", up);
+        button.addEventListener("pointercancel", up);
+        button.addEventListener("pointerleave", up);
+      }
+
+      bindHold(document.querySelector("#touch-left"), "left");
+      bindHold(document.querySelector("#touch-right"), "right");
+      document.querySelector("#touch-fire").addEventListener("pointerdown", function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        document.querySelector("#touch-fire").classList.add("is-down");
+        tapAction("fire");
+      });
+      document.querySelector("#touch-fire").addEventListener("pointerup", function () {
+        document.querySelector("#touch-fire").classList.remove("is-down");
+      });
+      document.querySelector("#touch-fire").addEventListener("pointercancel", function () {
+        document.querySelector("#touch-fire").classList.remove("is-down");
+      });
+
+      var swipeStart = null;
+      canvas.addEventListener(
+        "touchstart",
+        function (event) {
+          if (!event.changedTouches.length) return;
+          var t = event.changedTouches[0];
+          swipeStart = { x: t.clientX, y: t.clientY };
+        },
+        { passive: true },
+      );
+      canvas.addEventListener(
+        "touchend",
+        function (event) {
+          if (!swipeStart || !event.changedTouches.length) return;
+          var t = event.changedTouches[0];
+          var dx = t.clientX - swipeStart.x;
+          var dy = t.clientY - swipeStart.y;
+          swipeStart = null;
+          if (Math.abs(dx) < SWIPE_PX || Math.abs(dx) < Math.abs(dy)) return;
+          tapAction(dx < 0 ? "left" : "right");
+        },
+        { passive: true },
+      );
+
+      window.addEventListener(
+        "touchmove",
+        function (event) {
+          event.preventDefault();
+        },
+        { passive: false },
+      );
 
       function unityShowBanner(msg, type) {
         var warningBanner = document.querySelector("#unity-warning");
@@ -219,12 +404,12 @@
       }
 
       var buildUrl = "Build";
-      var loaderUrl = buildUrl + "/game-build.loader.js";
+      var loaderUrl = buildUrl + "/game-buildV2.loader.js";
       var config = {
         arguments: [],
-        dataUrl: buildUrl + "/game-build.data",
-        frameworkUrl: buildUrl + "/game-build.framework.js",
-        codeUrl: buildUrl + "/game-build.wasm",
+        dataUrl: buildUrl + "/game-buildV2.data",
+        frameworkUrl: buildUrl + "/game-buildV2.framework.js",
+        codeUrl: buildUrl + "/game-buildV2.wasm",
         streamingAssetsUrl: "StreamingAssets",
         companyName: "DefaultCompany",
         productName: "Jupiter Run",
@@ -242,7 +427,8 @@
       script.onload = function () {
         createUnityInstance(canvas, config, function (progress) {
           setProgress(progress);
-        }).then(function () {
+        }).then(function (instance) {
+          unityInstance = instance;
           setProgress(1);
           statusLabel.textContent = "Starting Jupiter Run…";
           setTimeout(hideOverlay, SPLASH_MASK_MS);

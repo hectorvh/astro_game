@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
 # Prepare Unity WebGL files for Netlify, then run next build.
 #
-# public/game-build/Build and TemplateData are git symlinks into game-build/.
-# Netlify publishes a copy of public/ without the repo-root game-build/ folder,
+# public/game-build/Build and TemplateData are git symlinks into game-buildV2/.
+# Netlify publishes a copy of public/ without the repo-root game-buildV2/ folder,
 # so those links would 404. On Netlify we replace them with real copies.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-SRC="$ROOT/game-build"
+SRC="$ROOT/game-buildV2"
 DEST="$ROOT/public/game-build"
 
-if [[ ! -f "$SRC/Build/game-build.wasm" ]]; then
-  echo "Unity build missing at $SRC/Build/game-build.wasm" >&2
+if [[ ! -f "$SRC/Build/game-buildV2.wasm" ]]; then
+  echo "Unity build missing at $SRC/Build/game-buildV2.wasm" >&2
   exit 1
 fi
 

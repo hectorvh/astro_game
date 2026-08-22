@@ -41,7 +41,7 @@ export function MinigameOneScreen() {
 
   return (
     <main
-      className="relative flex min-h-dvh w-full items-center justify-center overflow-hidden bg-[#231F20]"
+      className="relative flex min-h-dvh w-full items-center justify-center overflow-hidden overscroll-none bg-[#231F20]"
       onPointerDown={focusGame}
     >
       <iframe
@@ -49,7 +49,7 @@ export function MinigameOneScreen() {
         src={GAME_SRC}
         title="Jupiter Run"
         tabIndex={0}
-        className="absolute inset-0 h-full w-full border-0"
+        className="absolute inset-0 h-full w-full border-0 [touch-action:none]"
         allow="fullscreen; autoplay; gamepad"
         allowFullScreen
         onLoad={focusGame}
@@ -58,7 +58,7 @@ export function MinigameOneScreen() {
         type="button"
         onClick={() => goTo('map')}
         onPointerDown={(event) => event.stopPropagation()}
-        className="absolute right-4 bottom-4 z-10 flex h-14 items-center justify-center gap-2 rounded-2xl bg-destructive px-6 text-xl font-bold text-destructive-foreground shadow-storybook hover:brightness-95 sm:right-6 sm:bottom-6"
+        className="absolute top-4 right-4 z-10 flex h-14 items-center justify-center gap-2 rounded-2xl bg-destructive px-6 text-xl font-bold text-destructive-foreground shadow-storybook hover:brightness-95 sm:top-6 sm:right-6"
       >
         <LogOut className="size-6" />
         Exit

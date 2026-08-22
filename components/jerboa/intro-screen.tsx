@@ -78,6 +78,14 @@ export function IntroScreen() {
           Play
         </button>
       ) : null}
+
+      <button
+        type="button"
+        onClick={finish}
+        className="absolute right-4 bottom-4 z-10 flex h-14 items-center justify-center rounded-2xl bg-card/90 px-6 text-xl font-bold text-foreground shadow-storybook backdrop-blur-sm hover:bg-muted sm:right-6 sm:bottom-6"
+      >
+        Skip
+      </button>
     </main>
   )
 }
