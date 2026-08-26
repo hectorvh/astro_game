@@ -1,4 +1,4 @@
-// Domain types for the Laika Odyssey research instrument.
+// Domain types for the Astro Bunny research instrument.
 // Kept free of any DOM/browser APIs so the logic ports cleanly to a
 // future React Native / Capacitor mobile build (see spec §2).
 

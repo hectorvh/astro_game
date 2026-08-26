@@ -47,7 +47,7 @@ export function MinigameOneScreen() {
       <iframe
         ref={iframeRef}
         src={GAME_SRC}
-        title="Jupiter Run"
+        title="Galaxy Drift"
         tabIndex={0}
         className="absolute inset-0 h-full w-full border-0 [touch-action:none]"
         allow="fullscreen; autoplay; gamepad"

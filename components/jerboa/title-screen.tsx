@@ -1,40 +1,20 @@
 'use client'
 
 import { useState } from 'react'
-import { Info, LogOut, Play, Settings, X } from 'lucide-react'
+import { LogOut, Play, Settings, X } from 'lucide-react'
+import { BRAND } from '@/lib/jerboa/constants'
 import { useSession } from '@/lib/jerboa/session-context'
 import { DecorGlyphs } from './scene'
+
+const CORNER_BTN =
+  'flex size-12 items-center justify-center rounded-full border-2 border-primary/40 bg-card/90 text-foreground shadow-storybook backdrop-blur-sm transition-colors hover:bg-muted'
+
+const ACTION_BTN =
+  'flex h-12 w-52 items-center justify-center gap-2 rounded-full text-base font-bold shadow-storybook transition-transform hover:-translate-y-0.5 active:translate-y-0'
 
 export function TitleScreen() {
   const { resetSession, goTo } = useSession()
   const [overlay, setOverlay] = useState<null | 'about' | 'exit'>(null)
-
-  const menu = [
-    {
-      label: 'Start Playing',
-      icon: Play,
-      onClick: () => goTo('map'),
-      className: 'bg-primary text-primary-foreground hover:bg-teal-dark',
-    },
-    {
-      label: 'Settings',
-      icon: Settings,
-      onClick: () => goTo('settings'),
-      className: 'bg-secondary text-secondary-foreground hover:bg-amber-dark',
-    },
-    {
-      label: 'About the Experiment',
-      icon: Info,
-      onClick: () => setOverlay('about'),
-      className: 'bg-accent text-accent-foreground hover:bg-purple-dark',
-    },
-    {
-      label: 'Exit',
-      icon: LogOut,
-      onClick: () => setOverlay('exit'),
-      className: 'bg-destructive text-destructive-foreground hover:brightness-95',
-    },
-  ]
 
   return (
     <main className="relative flex min-h-dvh w-full items-center justify-center overflow-hidden">
@@ -50,7 +30,26 @@ export function TitleScreen() {
       />
       <DecorGlyphs />
 
-      <div className="relative z-10 mx-auto flex w-full max-w-5xl flex-col items-center gap-8 px-4 py-10 md:flex-row md:justify-between md:gap-6">
+      <button
+        type="button"
+        onClick={() => setOverlay('about')}
+        aria-label="About the Experiment"
+        className={`absolute top-4 left-4 z-20 sm:top-6 sm:left-6 ${CORNER_BTN}`}
+      >
+        <span className="font-serif text-[1.45rem] font-bold italic leading-none" aria-hidden>
+          i
+        </span>
+      </button>
+      <button
+        type="button"
+        onClick={() => goTo('settings')}
+        aria-label="Settings"
+        className={`absolute top-4 right-4 z-20 sm:top-6 sm:right-6 ${CORNER_BTN}`}
+      >
+        <Settings className="size-6" />
+      </button>
+
+      <div className="relative z-10 mx-auto flex w-full max-w-5xl flex-col items-center gap-8 px-4 pt-20 pb-10 md:flex-row md:justify-between md:gap-6 md:pt-10">
         {/* Character */}
         <div className="relative flex w-full max-w-xs items-end justify-center md:order-2 md:max-w-sm">
           {/* Ground contact shadow so the character reads as standing, not floating */}
@@ -59,41 +58,46 @@ export function TitleScreen() {
             className="absolute bottom-3 left-1/2 h-4 w-24 -translate-x-1/2 rounded-[50%] bg-foreground/25 blur-md md:w-28"
           />
           <img
-            src="/images/Astro_CorgiPilot1-removebg-preview.png"
-            alt="Laika, a cartoon dog wearing goggles and piloting a small green flying saucer"
-            className="relative w-36 md:w-44"
+            src={BRAND.characterImage}
+            alt="Astro Bunny, a grey-and-white rabbit astronaut in a white and blue spacesuit"
+            className="relative w-48 md:w-64"
           />
         </div>
 
         {/* Title + menu */}
         <div className="flex w-full max-w-md flex-col items-center text-center md:order-1 md:items-start md:text-left">
           <h1 className="font-display text-6xl font-bold leading-none text-balance sm:text-7xl">
-            <span className="block text-purple text-shadow-soft">Laika</span>
-            <span className="block text-primary text-shadow-soft">Odyssey</span>
+            <span className="block text-purple text-shadow-soft">Astro</span>
+            <span className="block text-primary text-shadow-soft">Bunny</span>
           </h1>
           <p className="mt-3 mb-8 rounded-full bg-card/80 px-4 py-1.5 text-base font-semibold text-muted-foreground shadow-sm">
-            a spatial adventure
+            Galaxy Drift
           </p>
 
-          <nav className="flex w-full flex-col gap-3" aria-label="Main menu">
-            {menu.map(({ label, icon: Icon, onClick, className }) => (
-              <button
-                key={label}
-                type="button"
-                onClick={onClick}
-                className={`flex h-14 w-full items-center gap-3 rounded-2xl px-6 text-xl font-bold shadow-storybook transition-transform hover:-translate-y-0.5 active:translate-y-0 ${className}`}
-              >
-                <Icon className="size-6" />
-                {label}
-              </button>
-            ))}
+          <nav className="flex flex-col items-center gap-3 md:items-start" aria-label="Main menu">
+            <button
+              type="button"
+              onClick={() => goTo('map')}
+              className={`${ACTION_BTN} bg-primary text-primary-foreground hover:bg-teal-dark`}
+            >
+              <Play className="size-5" />
+              Start Playing
+            </button>
+            <button
+              type="button"
+              onClick={() => setOverlay('exit')}
+              className={`${ACTION_BTN} bg-destructive text-destructive-foreground hover:brightness-95`}
+            >
+              <LogOut className="size-5" />
+              Exit
+            </button>
           </nav>
         </div>
       </div>
 
       {overlay ? (
         <div
-          className="absolute inset-0 z-20 flex items-center justify-center bg-black/55 p-4 backdrop-blur-sm"
+          className="absolute inset-0 z-30 flex items-center justify-center bg-black/55 p-4 backdrop-blur-sm"
           role="dialog"
           aria-modal="true"
           aria-labelledby="overlay-title"
@@ -114,7 +118,7 @@ export function TitleScreen() {
             </div>
             {overlay === 'about' ? (
               <p className="text-lg leading-relaxed text-foreground">
-                Laika Odyssey: A Spatial Adventure is a research instrument from the SCALA project
+                {BRAND.fullTitle} is a research instrument from the SCALA project
                 (Spatial Communication and Ageing across Languages). By playing, you help
                 researchers learn how people from different languages and cultures describe space.
                 Your data is anonymised and used for research only.
@@ -122,7 +126,7 @@ export function TitleScreen() {
             ) : (
               <div>
                 <p className="mb-6 text-lg leading-relaxed text-foreground">
-                  Thank you for helping Laika! You can return to the start at any time.
+                  Thank you for helping Astro Bunny! You can return to the start at any time.
                 </p>
                 <button
                   type="button"
