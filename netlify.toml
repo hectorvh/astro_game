@@ -19,3 +19,15 @@
   [headers.values]
     Content-Type = "application/octet-stream"
     Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/game-build-ice/Build/*.wasm"
+  [headers.values]
+    Content-Type = "application/wasm"
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/game-build-ice/Build/*.data"
+  [headers.values]
+    Content-Type = "application/octet-stream"
+    Cache-Control = "public, max-age=31536000, immutable"

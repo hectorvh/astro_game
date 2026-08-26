@@ -13,7 +13,8 @@ import { DeclinedScreen } from './declined-screen'
 import { TitleScreen } from './title-screen'
 import { MapScreen } from './map-screen'
 import { MinigameOneScreen } from './minigame-one-screen'
-import { Bird3dScreen, Jerboa3dScreen } from './jerboa-3d-screen'
+import { MinigameIceScreen } from './minigame-ice-screen'
+import { Bird3dScreen, Bunny3dScreen, Jerboa3dScreen } from './jerboa-3d-screen'
 
 function CurrentScreen() {
   const { step, participant, credentials } = useSession()
@@ -75,8 +76,12 @@ function CurrentScreen() {
       return <MapScreen />
     case 'minigame1':
       return <MinigameOneScreen />
+    case 'minigame2':
+      return <MinigameIceScreen />
     case 'jerboa3d':
       return <Jerboa3dScreen />
+    case 'bunny3d':
+      return <Bunny3dScreen />
     case 'bird3d':
       return <Bird3dScreen />
     default:
