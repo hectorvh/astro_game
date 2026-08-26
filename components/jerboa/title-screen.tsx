@@ -70,18 +70,15 @@ export function TitleScreen() {
             <span className="block text-purple text-shadow-soft">Astro</span>
             <span className="block text-primary text-shadow-soft">Bunny</span>
           </h1>
-          <p className="mt-3 mb-8 rounded-full bg-card/80 px-4 py-1.5 text-base font-semibold text-muted-foreground shadow-sm">
-            Galaxy Drift
-          </p>
 
-          <nav className="flex flex-col items-center gap-3 md:items-start" aria-label="Main menu">
+          <nav className="mt-8 flex flex-col items-center gap-3 md:items-start" aria-label="Main menu">
             <button
               type="button"
               onClick={() => goTo('map')}
               className={`${ACTION_BTN} bg-primary text-primary-foreground hover:bg-teal-dark`}
             >
               <Play className="size-5" />
-              Start Playing
+              Play
             </button>
             <button
               type="button"

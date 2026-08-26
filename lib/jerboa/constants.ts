@@ -5,7 +5,7 @@ export const BRAND = {
   subtitle: 'Galaxy Drift',
   fullTitle: 'Astro Bunny: Galaxy Drift',
   characterName: 'Astro Bunny',
-  characterImage: '/images/Gemini_Generated_Image_64cq7564cq7564cq-removebg.png',
+  characterImage: '/images/Gemini_Generated_Image_3ys78n3ys78n3ys7-removebg.png',
   minigameName: 'Galaxy Drift',
 } as const
 

@@ -125,9 +125,9 @@
         right: 0;
         bottom: 0;
         align-items: flex-end;
-        justify-content: center;
+        justify-content: space-between;
         gap: 1rem;
-        padding: 0.75rem 0.85rem 1.25rem;
+        padding: 0.75rem 1.1rem max(1.25rem, env(safe-area-inset-bottom));
         pointer-events: none;
       }
       #touch-controls.is-on {
@@ -155,19 +155,6 @@
         background: rgba(0, 200, 255, 0.35);
         border-color: #2fd8ff;
       }
-      #touch-fire {
-        min-width: 5.5rem;
-        font-size: 0.95rem;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        color: #0a0e1a;
-        background: rgba(47, 232, 176, 0.9);
-        border-color: #2fe8b0;
-      }
-      #touch-fire:active,
-      #touch-fire.is-down {
-        background: #2fe8b0;
-      }
     </style>
   </head>
   <body>
@@ -192,7 +179,6 @@
       </div>
       <div id="touch-controls" aria-label="Touch controls">
         <button type="button" id="touch-left" aria-label="Steer left">←</button>
-        <button type="button" id="touch-fire" aria-label="Fire laser">Fire</button>
         <button type="button" id="touch-right" aria-label="Steer right">→</button>
       </div>
     </div>
@@ -211,6 +197,8 @@
       var SPLASH_MASK_MS = 2800;
       var KEY_HOLD_MS = 70;
       var SWIPE_PX = 48;
+      var TAP_PX = 28;
+      var DOUBLE_TAP_MS = 320;
 
       var keyMap = {
         left: { key: "ArrowLeft", code: "ArrowLeft", keyCode: 37 },
@@ -306,9 +294,11 @@
         }, KEY_HOLD_MS);
         if (name === "fire" && unityInstance) {
           ["BunnyRunning", "PlayerControllerX", "Player"].forEach(function (objectName) {
-            try {
-              unityInstance.SendMessage(objectName, "ShootBlasters");
-            } catch (err) {}
+            ["ShootBlasters", "ShootBlaster"].forEach(function (method) {
+              try {
+                unityInstance.SendMessage(objectName, method);
+              } catch (err) {}
+            });
           });
         }
       }
@@ -338,20 +328,10 @@
 
       bindHold(document.querySelector("#touch-left"), "left");
       bindHold(document.querySelector("#touch-right"), "right");
-      document.querySelector("#touch-fire").addEventListener("pointerdown", function (event) {
-        event.preventDefault();
-        event.stopPropagation();
-        document.querySelector("#touch-fire").classList.add("is-down");
-        tapAction("fire");
-      });
-      document.querySelector("#touch-fire").addEventListener("pointerup", function () {
-        document.querySelector("#touch-fire").classList.remove("is-down");
-      });
-      document.querySelector("#touch-fire").addEventListener("pointercancel", function () {
-        document.querySelector("#touch-fire").classList.remove("is-down");
-      });
 
       var swipeStart = null;
+      var lastTapAt = 0;
+
       canvas.addEventListener(
         "touchstart",
         function (event) {
@@ -369,8 +349,22 @@
           var dx = t.clientX - swipeStart.x;
           var dy = t.clientY - swipeStart.y;
           swipeStart = null;
-          if (Math.abs(dx) < SWIPE_PX || Math.abs(dx) < Math.abs(dy)) return;
-          tapAction(dx < 0 ? "left" : "right");
+
+          if (Math.abs(dx) >= SWIPE_PX && Math.abs(dx) >= Math.abs(dy)) {
+            lastTapAt = 0;
+            tapAction(dx < 0 ? "left" : "right");
+            return;
+          }
+
+          if (Math.abs(dx) > TAP_PX || Math.abs(dy) > TAP_PX) return;
+
+          var now = Date.now();
+          if (now - lastTapAt <= DOUBLE_TAP_MS) {
+            lastTapAt = 0;
+            tapAction("fire");
+          } else {
+            lastTapAt = now;
+          }
         },
         { passive: true },
       );
@@ -404,12 +398,12 @@
       }
 
       var buildUrl = "Build";
-      var loaderUrl = buildUrl + "/game-buildV3.loader.js";
+      var loaderUrl = buildUrl + "/game-buildV5.loader.js";
       var config = {
         arguments: [],
-        dataUrl: buildUrl + "/game-buildV3.data",
-        frameworkUrl: buildUrl + "/game-buildV3.framework.js",
-        codeUrl: buildUrl + "/game-buildV3.wasm",
+        dataUrl: buildUrl + "/game-buildV5.data",
+        frameworkUrl: buildUrl + "/game-buildV5.framework.js",
+        codeUrl: buildUrl + "/game-buildV5.wasm",
         streamingAssetsUrl: "StreamingAssets",
         companyName: "DefaultCompany",
         productName: "Spatial Paws Game",

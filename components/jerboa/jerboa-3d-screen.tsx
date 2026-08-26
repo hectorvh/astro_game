@@ -13,6 +13,17 @@ export function Jerboa3dScreen() {
   )
 }
 
+export function Bunny3dScreen() {
+  return (
+    <Model3dScreen
+      modelSrc="/3d/AstroBunny.glb"
+      title="Astro Bunny"
+      label="Astro Bunny"
+      rotation={[0, Math.PI * 0.15, 0]}
+    />
+  )
+}
+
 export function Bird3dScreen() {
   return (
     <Model3dScreen
