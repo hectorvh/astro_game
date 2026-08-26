@@ -21,10 +21,10 @@ export function WelcomeScreen() {
         Welcome
       </p>
       <h1 className="mb-2 font-display text-4xl font-bold text-purple text-balance sm:text-5xl">
-        {"Laika Odyssey"}
+        {"Astro Bunny"}
       </h1>
       <p className="mb-8 text-base font-semibold text-muted-foreground">
-        A Spatial Adventure
+        Galaxy Drift
       </p>
 
       {error ? (

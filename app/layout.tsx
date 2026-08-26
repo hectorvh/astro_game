@@ -34,9 +34,9 @@ const baloo = localFont({
 })
 
 export const metadata: Metadata = {
-  title: 'Laika Odyssey: A Spatial Adventure',
+  title: 'Astro Bunny: Galaxy Drift',
   description:
-    'A gamified spatial-language research instrument. Help Laika fly toward Jupiter while taking part in the SCALA study.',
+    'A gamified spatial-language research instrument. Help Astro Bunny find the way home while taking part in the SCALA study.',
 }
 
 export const viewport: Viewport = {

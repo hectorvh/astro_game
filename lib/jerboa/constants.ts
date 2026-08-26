@@ -1,5 +1,14 @@
 import type { Fluency } from './types'
 
+export const BRAND = {
+  title: 'Astro Bunny',
+  subtitle: 'Galaxy Drift',
+  fullTitle: 'Astro Bunny: Galaxy Drift',
+  characterName: 'Astro Bunny',
+  characterImage: '/images/Gemini_Generated_Image_64cq7564cq7564cq-removebg.png',
+  minigameName: 'Galaxy Drift',
+} as const
+
 export const CONSENT_VERSION = 'mock-2026-07-22'
 
 // Non-overlapping age buckets. The sketch used overlapping ranges

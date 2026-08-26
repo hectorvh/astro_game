@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useSession } from '@/lib/jerboa/session-context'
 
-const INTRO_SRC = '/videos/generate_a_video_intro_in_one.mp4'
+const INTRO_SRC = '/videos/astro_bunny.mp4'
 
 export function IntroScreen() {
   const { goTo } = useSession()
@@ -66,7 +66,7 @@ export function IntroScreen() {
         disablePictureInPicture
         onEnded={finish}
         onError={finish}
-        aria-label="Laika Odyssey introduction"
+        aria-label="Astro Bunny: Galaxy Drift introduction"
       />
 
       {needsTap ? (

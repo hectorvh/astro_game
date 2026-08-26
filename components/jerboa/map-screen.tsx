@@ -2,16 +2,17 @@
 
 import { useState } from 'react'
 import { ChevronLeft, Flag, MessageCircle, Settings, Sparkles, Star } from 'lucide-react'
+import { BRAND } from '@/lib/jerboa/constants'
 import { useSession } from '@/lib/jerboa/session-context'
 
-// Landmark nodes along the flight path toward Jupiter.
-// Start (lower-left) → Jupiter (upper-right). Node 1 is Jupiter Run.
+// Landmark hops on the long way home. Start (lower-left) → Home Signal
+// (upper-right). Node 1 is the playable Galaxy Drift runner.
 const NODES = [
-  { id: 1, label: 'Jupiter Run', x: 20, y: 62 },
-  { id: 2, label: 'Asteroid Belt', x: 40, y: 74 },
-  { id: 3, label: 'Europa Drift', x: 55, y: 48 },
-  { id: 4, label: "Io Station", x: 74, y: 60 },
-  { id: 5, label: 'Jupiter', x: 84, y: 30 },
+  { id: 1, label: 'Galaxy Drift', x: 20, y: 62 },
+  { id: 2, label: 'Ice Moon', x: 40, y: 74 },
+  { id: 3, label: 'Crystal Caves', x: 55, y: 48 },
+  { id: 4, label: 'Moss World', x: 74, y: 60 },
+  { id: 5, label: 'Home Signal', x: 84, y: 30 },
 ]
 
 const PATH_D = 'M 10 84 L 20 62 L 40 74 L 55 48 L 74 60 L 84 30'
@@ -24,7 +25,7 @@ export function MapScreen() {
 
   return (
     <main className="relative min-h-dvh w-full overflow-hidden bg-background">
-      {/* Starfield / Jupiter backdrop */}
+      {/* Starfield backdrop */}
       <div
         aria-hidden="true"
         className="absolute inset-0 bg-cover bg-center"
@@ -36,11 +37,11 @@ export function MapScreen() {
       <div className="relative z-20 flex items-start justify-between gap-3 p-4 sm:p-6">
         <div className="max-w-md rounded-2xl border-2 border-primary/40 bg-card/90 p-4 shadow-storybook backdrop-blur-sm">
           <h1 className="font-display text-2xl font-bold text-purple sm:text-3xl">
-            Laika Odyssey
+            Astro Bunny
           </h1>
           <p className="mt-1 text-base leading-snug text-muted-foreground text-pretty">
-            Help Laika fly to Jupiter! Reach each stop and use your communication skills to solve
-            friendly challenges.
+            The ship drifted through a black hole. Hop from world to world and recalibrate the
+            star-charts to find the way home.
           </p>
         </div>
         <div className="flex flex-col gap-2">
@@ -120,21 +121,14 @@ export function MapScreen() {
         ))}
       </div>
 
-      {/* Laika at the start — tap to open the 3D view */}
+      {/* Astro Bunny at the start */}
       <div className="pointer-events-none absolute inset-0 z-[21]">
         <Marker x={10} y={72}>
-          <button
-            type="button"
-            onClick={() => goTo('jerboa3d')}
-            aria-label="Open a 3D view of Laika"
-            className="pointer-events-auto bg-transparent"
-          >
-            <img
-              src="/images/Astro_CorgiPilot1-removebg-preview.png"
-              alt=""
-              className="w-36 animate-bob drop-shadow-[0_12px_18px_rgba(0,0,0,0.55)] sm:w-44"
-            />
-          </button>
+          <img
+            src={BRAND.characterImage}
+            alt=""
+            className="w-28 animate-bob drop-shadow-[0_12px_18px_rgba(0,0,0,0.55)] sm:w-36"
+          />
         </Marker>
       </div>
 
@@ -149,7 +143,7 @@ export function MapScreen() {
             <MessageCircle className="size-4 text-primary" />
             {participant?.name
               ? `Ready when you are, ${participant.name}!`
-              : 'Use your communication skills to help Laika!'}
+              : 'Use your communication skills to help Astro Bunny!'}
           </span>
         </div>
       </div>

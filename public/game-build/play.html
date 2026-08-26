@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes">
-    <title>Jupiter Run</title>
+    <title>Galaxy Drift</title>
     <link rel="stylesheet" href="TemplateData/style.css">
     <style>
       html, body {
@@ -181,10 +181,10 @@
       </div>
       <div id="unity-warning"></div>
       <div id="unity-footer"></div>
-      <div id="game-loading" role="status" aria-live="polite" aria-label="Loading Jupiter Run">
-        <p id="game-loading-kicker">Laika Odyssey</p>
-        <h1 id="game-loading-title">Jupiter Run</h1>
-        <p id="game-loading-status">Loading spacecraft systems…</p>
+      <div id="game-loading" role="status" aria-live="polite" aria-label="Loading Galaxy Drift">
+        <p id="game-loading-kicker">Astro Bunny</p>
+        <h1 id="game-loading-title">Galaxy Drift</h1>
+        <p id="game-loading-status">Recalibrating star-charts…</p>
         <div id="game-loading-track">
           <div id="game-loading-fill"></div>
         </div>
@@ -305,7 +305,7 @@
           emitKey("keyup", spec);
         }, KEY_HOLD_MS);
         if (name === "fire" && unityInstance) {
-          ["Player", "PlayerControllerX", "Laika"].forEach(function (objectName) {
+          ["BunnyRunning", "PlayerControllerX", "Player"].forEach(function (objectName) {
             try {
               unityInstance.SendMessage(objectName, "ShootBlasters");
             } catch (err) {}
@@ -404,15 +404,15 @@
       }
 
       var buildUrl = "Build";
-      var loaderUrl = buildUrl + "/game-buildV2.loader.js";
+      var loaderUrl = buildUrl + "/game-buildV3.loader.js";
       var config = {
         arguments: [],
-        dataUrl: buildUrl + "/game-buildV2.data",
-        frameworkUrl: buildUrl + "/game-buildV2.framework.js",
-        codeUrl: buildUrl + "/game-buildV2.wasm",
+        dataUrl: buildUrl + "/game-buildV3.data",
+        frameworkUrl: buildUrl + "/game-buildV3.framework.js",
+        codeUrl: buildUrl + "/game-buildV3.wasm",
         streamingAssetsUrl: "StreamingAssets",
         companyName: "DefaultCompany",
-        productName: "Jupiter Run",
+        productName: "Spatial Paws Game",
         productVersion: "0.1.0",
         showBanner: unityShowBanner,
       };
@@ -430,10 +430,10 @@
         }).then(function (instance) {
           unityInstance = instance;
           setProgress(1);
-          statusLabel.textContent = "Starting Jupiter Run…";
+          statusLabel.textContent = "Starting Galaxy Drift…";
           setTimeout(hideOverlay, SPLASH_MASK_MS);
         }).catch(function (message) {
-          statusLabel.textContent = message || "Could not start Jupiter Run.";
+          statusLabel.textContent = message || "Could not start Galaxy Drift.";
           pctLabel.textContent = "";
         });
       };

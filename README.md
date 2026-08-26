@@ -1,8 +1,8 @@
-# Laika Odyssey: A Spatial Adventure
+# Astro Bunny: Galaxy Drift
 
-A research instrument from the SCALA project (Spatial Communication and Ageing across Languages) at ifgi, University of Münster. It is dressed as a space flight: participants help **Laika**, a cartoon dog in a small spacecraft, fly toward **Jupiter** while the app can record demographics, consent, and mini-game trials.
+A research instrument from the SCALA project (Spatial Communication and Ageing across Languages) at ifgi, University of Münster. It is dressed as a space flight: participants help **Astro Bunny**, a supply-run astronaut whose craft drifted through a black hole, hop from world to world while the app can record demographics, consent, and mini-game trials.
 
-The vertical slice that is built today is **onboarding → consent → title → map → Jupiter Run** (Unity WebGL). Other map stops are still placeholders.
+The vertical slice that is built today is **onboarding → consent → title → map → Galaxy Drift** (Unity WebGL). Other map stops are still placeholders.
 
 ## Architecture
 
@@ -25,7 +25,7 @@ Writes
         └── memory    → in-tab Map (lost on reload)
 ```
 
-Jupiter Run is a Unity WebGL build under `game-buildV2/`. The Next app embeds it in an iframe at `/game-build/play.html`. Locally, `public/game-build/Build` and `TemplateData` are symlinks into `game-buildV2/`. Netlify copies those trees as real files during `pnpm run build:netlify` so the `.wasm` / `.data` are published.
+Galaxy Drift is a Unity WebGL build under `game-buildV3/`. The Next app embeds it in an iframe at `/game-build/play.html`. Locally, `public/game-build/Build`, `TemplateData`, and `StreamingAssets` are symlinks into `game-buildV3/`. Netlify copies those trees as real files during `pnpm run build:netlify` so the `.wasm` / `.data` are published.
 
 ### Layers
 
@@ -37,7 +37,7 @@ Jupiter Run is a Unity WebGL build under `game-buildV2/`. The Next app embeds it
 | Backend switch | `lib/jerboa/backend.ts` | Reads `NEXT_PUBLIC_JERBOA_BACKEND`. |
 | HTTP API | `app/api/...` | Used in **postgres** mode. The browser never talks to Postgres. |
 | Database | `db/local.sql` | Users, languages, trials. Existing databases: `pnpm db:merge`. |
-| Mini-game | `game-buildV2/` + `public/game-build/play.html` | Unity WebGL (Jupiter Run). |
+| Mini-game | `game-buildV3/` + `public/game-build/play.html` | Unity WebGL (Galaxy Drift / Astro Bunny Runner). |
 
 **Postgres mode (local default):** Next.js route handlers use `pg` and Unix-socket peer auth. Identity is one httpOnly cookie (`jerboa_participant` = `users.id`). Passwords are stored as `scrypt` hashes, never in plaintext. A user row is written only when **Create account** succeeds at the end of sign-in.
 
@@ -49,11 +49,11 @@ Jupiter Run is a Unity WebGL build under `game-buildV2/`. The Next app embeds it
 
 - `users` — userid, password hash, name, age range, gender, country, UI language, consent version and timestamp
 - `user_languages` — language + fluency (at least one required)
-- `data` — mini-game trials (schema ready; Jupiter Run does not write trial rows yet)
+- `data` — mini-game trials (schema ready; Galaxy Drift does not write trial rows yet)
 
 ## Screens
 
-`JourneyApp` reads `step` and renders one component. The first seven screens sit in a card (`PanelStage`). Title, Map, and Jupiter Run are full-bleed scenes.
+`JourneyApp` reads `step` and renders one component. The first seven screens sit in a card (`PanelStage`). Title, Map, and Galaxy Drift are full-bleed scenes.
 
 | Step | Screen | File | What it does |
 | --- | --- | --- | --- |
@@ -67,15 +67,15 @@ Jupiter Run is a Unity WebGL build under `game-buildV2/`. The Next app embeds it
 | `consent` | Ethical Information & Consent | `consent-screen.tsx` | Tick-box gate, then **Create account** (writes the `users` row, including consent). Decline writes nothing. |
 | `declined` | Thank you for your time | `declined-screen.tsx` | Terminal state after Decline. |
 | `title` | Home menu | `title-screen.tsx` | Start Playing, Settings, About, Exit. |
-| `map` | Flight path to Jupiter | `map-screen.tsx` | Five stops. Stop 1 opens Jupiter Run. |
-| `minigame1` | Jupiter Run | `minigame-one-screen.tsx` | Unity WebGL embed. Arrow keys / A·D to change lane; Up / Space to fire. |
+| `map` | Flight path home | `map-screen.tsx` | Five stops. Stop 1 opens Galaxy Drift. |
+| `minigame1` | Galaxy Drift | `minigame-one-screen.tsx` | Unity WebGL embed. Arrow keys / A·D to change lane; Space to fire. |
 
 The step name `userdatasetup` and the file `details-screen.tsx` differ on purpose: the file still uses the older `DetailsScreen` export.
 
 ```
 Intro video (first load only)
  └── Welcome
-      ├── Access as Guest  →  Title  →  Map  →  Jupiter Run
+      ├── Access as Guest  →  Title  →  Map  →  Galaxy Drift
       ├── Sign In (userid check only)
       │     → User data setup (draft)
       │     → Information
@@ -85,13 +85,13 @@ Intro video (first load only)
       └── Log In  →  Title  →  Map
 ```
 
-**Access as Guest** skips signup and the database and opens the title screen so you can try the map and Jupiter Run. No participant row is created.
+**Access as Guest** skips signup and the database and opens the title screen so you can try the map and Galaxy Drift. No participant row is created.
 
 **Settings** on Title and Map opens the settings step with the saved profile. Saving returns to Title. **Exit → Back to the start** clears the logged-in user (memory and cookie) so Sign In cannot see the previous account.
 
 Shared UI (not screens): `scene.tsx` (card / backdrop), `form-fields.tsx`, `language-picker.tsx`.
 
-The design brief and research constraints live in `jerboas-journey-technical-spec.md`. The Jupiter Run mini-game spec is `laika-odyssey-jupiter-run-minigame-spec.md`.
+Story and character notes live in `astro-bunny-galaxy-drift-story.md`. The playable runner spec is `spatial-paws-astro-bunny-runner-spec.md`. Implementation inventory is `game-logic.md`.
 
 ## Run the app
 
@@ -170,6 +170,6 @@ Config lives in `netlify.toml`. The site is a Next.js app (not a static export) 
 | Node | 22 (`NODE_VERSION` in `netlify.toml`) |
 | Backend | `NEXT_PUBLIC_JERBOA_BACKEND=memory` (build-time; guest play only) |
 
-`pnpm run build:netlify` copies `game-buildV2/Build` and `game-buildV2/TemplateData` into `public/game-build` as real files (the git symlinks would 404 on the CDN), then runs `next build`. The first deploy is large (~95MB Unity `.wasm` + `.data`).
+`pnpm run build:netlify` copies `game-buildV3/Build`, `TemplateData`, and `StreamingAssets` into `public/game-build` as real files (the git symlinks would 404 on the CDN), then runs `next build`. The first deploy is large (~95MB Unity `.wasm` + `.data`).
 
 On the live site, use **Access as Guest**. Sign-in and trials are not persisted in memory mode. For a hosted database, use Option C (Supabase) instead of local Postgres.
