@@ -28,7 +28,6 @@ export type Step =
   | 'title'
   | 'map'
   | 'minigame1'
-  | 'minigame2'
   | 'jerboa3d'
   | 'bunny3d'
   | 'bird3d'

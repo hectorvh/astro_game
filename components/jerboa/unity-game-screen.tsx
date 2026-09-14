@@ -1,13 +1,14 @@
 'use client'
 
 import { useCallback, useEffect, useRef } from 'react'
-import { LogOut } from 'lucide-react'
 import { useSession } from '@/lib/jerboa/session-context'
 
 type UnityGameScreenProps = {
   src: string
   title: string
 }
+
+const EXIT_MESSAGE = 'astroBunnyExit'
 
 export function UnityGameScreen({ src, title }: UnityGameScreenProps) {
   const { goTo } = useSession()
@@ -24,6 +25,17 @@ export function UnityGameScreen({ src, title }: UnityGameScreenProps) {
       // iframe may not be ready yet
     }
   }, [])
+
+  useEffect(() => {
+    function onMessage(event: MessageEvent) {
+      if (event.source !== iframeRef.current?.contentWindow) return
+      if (event.data?.type !== EXIT_MESSAGE) return
+      goTo('map')
+    }
+
+    window.addEventListener('message', onMessage)
+    return () => window.removeEventListener('message', onMessage)
+  }, [goTo])
 
   useEffect(() => {
     const frame = iframeRef.current
@@ -57,15 +69,6 @@ export function UnityGameScreen({ src, title }: UnityGameScreenProps) {
         allowFullScreen
         onLoad={focusGame}
       />
-      <button
-        type="button"
-        onClick={() => goTo('map')}
-        onPointerDown={(event) => event.stopPropagation()}
-        aria-label="Exit"
-        className="absolute right-4 bottom-28 z-10 flex size-12 items-center justify-center rounded-full bg-destructive text-destructive-foreground shadow-storybook hover:brightness-95 sm:right-6 sm:bottom-32"
-      >
-        <LogOut className="size-5" />
-      </button>
     </main>
   )
 }

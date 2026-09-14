@@ -23,7 +23,7 @@ const NODES = [
     x: 40,
     y: 80,
     icon: '/images/map-ice-moon.png',
-    game: 'minigame2' as const,
+    game: null,
   },
   {
     id: 3,

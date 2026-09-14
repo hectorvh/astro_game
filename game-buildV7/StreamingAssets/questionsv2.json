@@ -1,0 +1,69 @@
+{
+  "questions": [
+    {
+      "id": 1,
+      "question": "Where is the red sphere located relative to the box?",
+      "answers": ["Inside the box", "Under the box", "Behind the box"],
+      "correctIndex": 0,
+      "category": "Topological (Containment)",
+      "difficulty": 1,
+      "spatialConfig": {
+        "sphereLocalPosition": {"x": 0.0, "y": 0.0, "z": 0.0},
+        "sphereScale": {"x": 0.6, "y": 0.6, "z": 0.6},
+        "boxDimensions": {"width": 2.0, "height": 2.2, "depth": 1.5}
+      }
+    },
+    {
+      "id": 2,
+      "question": "Where is the red sphere resting?",
+      "answers": ["Beside the box", "On top of the box", "Inside the box"],
+      "correctIndex": 1,
+      "category": "Topological (Support)",
+      "difficulty": 1,
+      "spatialConfig": {
+        "sphereLocalPosition": {"x": 0.0, "y": 1.45, "z": 0.0},
+        "sphereScale": {"x": 0.6, "y": 0.6, "z": 0.6},
+        "boxDimensions": {"width": 2.0, "height": 2.2, "depth": 1.5}
+      }
+    },
+    {
+      "id": 3,
+      "question": "Where is the red sphere situated relative to the box?",
+      "answers": ["Behind the box", "In front of the box", "Inside the box"],
+      "correctIndex": 1,
+      "category": "Projective (Sagittal Axis)",
+      "difficulty": 2,
+      "spatialConfig": {
+        "sphereLocalPosition": {"x": 0.0, "y": 0.0, "z": -1.4},
+        "sphereScale": {"x": 0.6, "y": 0.6, "z": 0.6},
+        "boxDimensions": {"width": 2.0, "height": 2.2, "depth": 1.5}
+      }
+    },
+    {
+      "id": 4,
+      "question": "On which side of the box is the red sphere located?",
+      "answers": ["Behind the box", "To the right of the box", "To the left of the box"],
+      "correctIndex": 2,
+      "category": "Projective (Lateral Axis)",
+      "difficulty": 3,
+      "spatialConfig": {
+        "sphereLocalPosition": {"x": -1.8, "y": -0.5, "z": 0.0},
+        "sphereScale": {"x": 0.6, "y": 0.6, "z": 0.6},
+        "boxDimensions": {"width": 2.0, "height": 2.2, "depth": 1.5}
+      }
+    },
+    {
+      "id": 5,
+      "question": "How is the sphere positioned relative to the box?",
+      "answers": ["Far away", "Near", "Behind"],
+      "correctIndex": 1,
+      "category": "Distance Relations",
+      "difficulty": 1,
+      "spatialConfig": {
+        "sphereLocalPosition": {"x": 1.15, "y": 0.1, "z": 0.25},
+        "sphereScale": {"x": 0.6, "y": 0.6, "z": 0.6},
+        "boxDimensions": {"width": 2.0, "height": 2.2, "depth": 1.5}
+      }
+    }
+  ]
+}

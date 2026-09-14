@@ -117,44 +117,36 @@
         }
       }
 
-      #touch-controls {
-        display: none;
+      /* Invisible hit target aligned to the pause-menu Exit button. */
+      #pause-exit-hit {
         position: absolute;
-        z-index: 20;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        align-items: flex-end;
-        justify-content: space-between;
-        gap: 1rem;
-        padding: 0.75rem 1.1rem max(1.25rem, env(safe-area-inset-bottom));
+        z-index: 25;
+        left: 50%;
+        top: 56.9%;
+        width: 78%;
+        height: 6.4%;
+        min-height: 2.75rem;
+        transform: translate(-50%, -50%);
+        margin: 0;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        opacity: 0;
         pointer-events: none;
-      }
-      #touch-controls.is-on {
-        display: flex;
-      }
-      #touch-controls button {
-        pointer-events: auto;
-        flex: 0 0 auto;
-        min-width: 4.5rem;
-        min-height: 4.5rem;
-        padding: 0 1.1rem;
-        border: 2px solid rgba(47, 216, 255, 0.45);
-        border-radius: 1.25rem;
-        background: rgba(26, 34, 51, 0.82);
-        color: #e8f4ff;
-        font-family: ui-sans-serif, system-ui, sans-serif;
-        font-size: 1.7rem;
-        font-weight: 800;
-        line-height: 1;
-        backdrop-filter: blur(8px);
         -webkit-tap-highlight-color: transparent;
       }
-      #touch-controls button:active,
-      #touch-controls button.is-down {
-        background: rgba(0, 200, 255, 0.35);
-        border-color: #2fd8ff;
+      #pause-exit-hit.is-on {
+        pointer-events: auto;
+        cursor: pointer;
       }
+      @media (orientation: landscape) {
+        #pause-exit-hit {
+          top: 58%;
+          width: min(24rem, 52vw);
+          height: 10%;
+        }
+      }
+
     </style>
   </head>
   <body>
@@ -168,6 +160,7 @@
       </div>
       <div id="unity-warning"></div>
       <div id="unity-footer"></div>
+      <button type="button" id="pause-exit-hit" aria-label="Exit" tabindex="-1"></button>
       <div id="game-loading" role="status" aria-live="polite" aria-label="Loading Galaxy Drift">
         <p id="game-loading-kicker">Astro Bunny</p>
         <h1 id="game-loading-title">Galaxy Drift</h1>
@@ -176,10 +169,6 @@
           <div id="game-loading-fill"></div>
         </div>
         <p id="game-loading-pct">0%</p>
-      </div>
-      <div id="touch-controls" aria-label="Touch controls">
-        <button type="button" id="touch-left" aria-label="Steer left">←</button>
-        <button type="button" id="touch-right" aria-label="Steer right">→</button>
       </div>
     </div>
     <script>
@@ -191,8 +180,9 @@
       var fill = document.querySelector("#game-loading-fill");
       var pctLabel = document.querySelector("#game-loading-pct");
       var statusLabel = document.querySelector("#game-loading-status");
-      var touchPad = document.querySelector("#touch-controls");
+      var pauseExitHit = document.querySelector("#pause-exit-hit");
       var unityInstance = null;
+      var pauseMenuOpen = false;
       // Unity Personal splash plays after createUnityInstance resolves (~2s).
       var SPLASH_MASK_MS = 2800;
       var KEY_HOLD_MS = 70;
@@ -242,6 +232,121 @@
         pctLabel.textContent = pct + "%";
       }
 
+      var didRequestExit = false;
+      function requestExitToMap() {
+        if (didRequestExit) return;
+        didRequestExit = true;
+        try {
+          window.parent.postMessage({ type: "astroBunnyExit" }, "*");
+        } catch (err) {}
+      }
+
+      function invokeUnityExit() {
+        if (!unityInstance || typeof unityInstance.SendMessage !== "function") return;
+        ["GameHUD", "PauseMenu"].forEach(function (objectName) {
+          ["OnExitClicked", "OnExit"].forEach(function (method) {
+            try {
+              unityInstance.SendMessage(objectName, method);
+            } catch (err) {}
+          });
+        });
+      }
+
+      function setPauseMenuOpen(open) {
+        pauseMenuOpen = !!open;
+        if (pauseExitHit) pauseExitHit.classList.toggle("is-on", pauseMenuOpen);
+      }
+
+      function togglePauseMenu() {
+        setPauseMenuOpen(!pauseMenuOpen);
+      }
+
+      function canvasPoint(event) {
+        var rect = canvas.getBoundingClientRect();
+        if (!rect.width || !rect.height) return null;
+        return {
+          x: (event.clientX - rect.left) / rect.width,
+          y: (event.clientY - rect.top) / rect.height,
+        };
+      }
+
+      function hitPauseButton(pt) {
+        /* Play/pause control is bottom-right, beside SCORE. */
+        return pt.x > 0.76 && pt.y > 0.83;
+      }
+
+      function hitContinueButton(pt) {
+        return pt.x > 0.12 && pt.x < 0.9 && pt.y > 0.39 && pt.y < 0.47;
+      }
+
+      function hitPauseCard(pt) {
+        return pt.x > 0.1 && pt.x < 0.9 && pt.y > 0.1 && pt.y < 0.82;
+      }
+
+      function hookUnityExit(instance) {
+        var module = instance && instance.Module;
+        if (module) {
+          var previousCleanup = module.QuitCleanup;
+          module.QuitCleanup = function () {
+            try {
+              if (typeof previousCleanup === "function") previousCleanup();
+            } finally {
+              requestExitToMap();
+            }
+          };
+        }
+
+        var previousQuit = instance && instance.Quit;
+        if (typeof previousQuit === "function") {
+          instance.Quit = function () {
+            return Promise.resolve(previousQuit.call(instance)).finally(requestExitToMap);
+          };
+        }
+
+        window.setInterval(function () {
+          if (module && module.shouldQuit) requestExitToMap();
+        }, 250);
+      }
+
+      if (pauseExitHit) {
+        pauseExitHit.addEventListener("pointerdown", function (event) {
+          event.preventDefault();
+          event.stopPropagation();
+          invokeUnityExit();
+          requestExitToMap();
+        });
+      }
+
+      window.addEventListener(
+        "keydown",
+        function (event) {
+          if (event.key === "Escape" || event.code === "Escape" || event.key === "Pause") {
+            togglePauseMenu();
+          }
+        },
+        true,
+      );
+
+      canvas.addEventListener(
+        "pointerdown",
+        function (event) {
+          var pt = canvasPoint(event);
+          if (!pt) return;
+          if (hitPauseButton(pt)) {
+            togglePauseMenu();
+            return;
+          }
+          if (pauseMenuOpen && hitContinueButton(pt)) {
+            setPauseMenuOpen(false);
+            return;
+          }
+          if (pauseMenuOpen && !hitPauseCard(pt) && !hitPauseButton(pt)) {
+            setPauseMenuOpen(false);
+          }
+        },
+        true,
+      );
+
       function hideOverlay() {
         overlay.classList.add("is-done");
         overlay.addEventListener(
@@ -254,16 +359,7 @@
         if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
           overlay.style.display = "none";
         }
-        if (wantsTouchPad()) touchPad.classList.add("is-on");
         canvas.focus();
-      }
-
-      function wantsTouchPad() {
-        return (
-          navigator.maxTouchPoints > 0 ||
-          window.matchMedia("(pointer: coarse)").matches ||
-          /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
-        );
       }
 
       function emitKey(type, spec) {
@@ -302,32 +398,6 @@
           });
         }
       }
-
-      function bindHold(button, name) {
-        var held = false;
-        function down(event) {
-          event.preventDefault();
-          event.stopPropagation();
-          if (held) return;
-          held = true;
-          button.classList.add("is-down");
-          emitKey("keydown", keyMap[name]);
-        }
-        function up(event) {
-          if (event) event.preventDefault();
-          if (!held) return;
-          held = false;
-          button.classList.remove("is-down");
-          emitKey("keyup", keyMap[name]);
-        }
-        button.addEventListener("pointerdown", down);
-        button.addEventListener("pointerup", up);
-        button.addEventListener("pointercancel", up);
-        button.addEventListener("pointerleave", up);
-      }
-
-      bindHold(document.querySelector("#touch-left"), "left");
-      bindHold(document.querySelector("#touch-right"), "right");
 
       var swipeStart = null;
       var lastTapAt = 0;
@@ -398,12 +468,12 @@
       }
 
       var buildUrl = "Build";
-      var loaderUrl = buildUrl + "/game-buildV5.loader.js";
+      var loaderUrl = buildUrl + "/game-buildV7.loader.js";
       var config = {
         arguments: [],
-        dataUrl: buildUrl + "/game-buildV5.data",
-        frameworkUrl: buildUrl + "/game-buildV5.framework.js",
-        codeUrl: buildUrl + "/game-buildV5.wasm",
+        dataUrl: buildUrl + "/game-buildV7.data.br",
+        frameworkUrl: buildUrl + "/game-buildV7.framework.js.br",
+        codeUrl: buildUrl + "/game-buildV7.wasm.br",
         streamingAssetsUrl: "StreamingAssets",
         companyName: "DefaultCompany",
         productName: "Spatial Paws Game",
@@ -423,6 +493,7 @@
           setProgress(progress);
         }).then(function (instance) {
           unityInstance = instance;
+          hookUnityExit(instance);
           setProgress(1);
           statusLabel.textContent = "Starting Galaxy Drift…";
           setTimeout(hideOverlay, SPLASH_MASK_MS);
