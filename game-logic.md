@@ -96,6 +96,7 @@ Laika is an earlier playable astronaut dog. `SpawnManager` still looks up a Game
 - **Prefab:** `Assets/Ground/Ground.prefab`
 - **Scene parent:** `GroundMoving` with children `Ground1` … `Ground10`
 - **Script:** `TrackManager`
+- **Scale:** every Ground tile must use **positive** XYZ scale. Do not mirror with negative scale; rotate 180° instead (PhysX box colliders).
 
 Tiles are lined up along Z (`tileLength = 10`). Each frame they move backward. When a tile goes behind Z = `-10`, it is moved to the end of the row. This is an infinite scrolling floor; the player never leaves the start area.
 
@@ -239,3 +240,12 @@ Product name: **Spatial Paws Game**.
 Play scene: **Jerboa Runner**.  
 WebGL build profiles exist under `Assets/Settings/Build Profiles/`.  
 Quiz JSON must stay in `StreamingAssets` so it is copied into builds and can be edited without recompiling scripts.
+
+### WebGL player settings (required)
+
+The Next.js repo only ships the exported player (`game-buildV7/`). The following must be applied in the **Unity Editor** before File → Build, then the new `Build/`, `TemplateData/`, and `StreamingAssets/` trees dropped here.
+
+1. **Keep physics types from being stripped.** Copy `unity-webgl/link.xml` from this repo into the Unity project’s `Assets/` folder (same filename). Runtime `AddComponent<SphereCollider>()` / `MeshCollider` on quiz and spawned objects otherwise fails: *Can't add component because class 'SphereCollider' doesn't exist!* (same for `MeshCollider`). Alternative: Player → Other Settings → Managed Stripping Level → Minimal.
+2. **No negative scale on ground tiles.** `GroundMoving/Ground1` … `Ground10` (and `Assets/Ground/Ground.prefab`) must have Scale.x / y / z all **positive**. PhysX cannot compute box-collider contacts on negative scale and players clip or snag. Mirror a tile with a 180° Y or Z rotation, not `scale.x = -1`.
+3. **Desktop-safe texture compression.** Project Settings → Editor → WebGL → Texture Compression Format: **DXT (BC) / ETC2** or **Basis Universal**, not ASTC. ASTC6X6 is decompressed on the CPU in desktop browsers (*RGBA Compressed ASTC6X6 … is not supported*), which stutters load and inflates memory.
+4. **URP upscaling the WebGL2 compiler can use.** On the Universal Render Pipeline asset, set Upscaling Filter to **Bilinear** or **Nearest-Neighbor**, not FSR / EASU (*Hidden/Universal Render Pipeline/Edge Adaptive Spatial Upsampling is not supported*). That failure currently disables **all** post-processing passes. On the main camera, turn off VR/XR `stereoTargetEye` for the WebGL build (it is built-in-pipeline only).
