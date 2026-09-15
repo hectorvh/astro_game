@@ -13,6 +13,12 @@
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
+# Unity WebGL needs eval / WASM compile; a strict script-src blocks Galaxy Drift.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval' 'unsafe-inline' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; font-src 'self'; connect-src 'self' blob: data: https:; worker-src 'self' blob:; frame-src 'self'; object-src 'none'; base-uri 'self'"
+
 # Keep the serverless function under Netlify's 250MB unzipped limit.
 [functions]
   included_files = [

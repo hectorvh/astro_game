@@ -1,4 +1,23 @@
 /** @type {import('next').NextConfig} */
+
+// Unity WebGL (and the 3D viewer) compile WASM / use eval-style helpers.
+// Without these sources Chrome blocks the minigame under script-src.
+const CONTENT_SECURITY_POLICY = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval' 'unsafe-inline' blob:",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob:",
+  "media-src 'self' blob:",
+  "font-src 'self'",
+  "connect-src 'self' blob: data: https:",
+  "worker-src 'self' blob:",
+  "frame-src 'self'",
+  "object-src 'none'",
+  "base-uri 'self'",
+].join('; ')
+
+const cspHeader = { key: 'Content-Security-Policy', value: CONTENT_SECURITY_POLICY }
+
 const nextConfig = {
   // Route handlers persist to local Postgres, so this cannot be a static
   // `output: 'export'` app. `pnpm dev` / `pnpm start` run a Node server.
@@ -24,6 +43,18 @@ const nextConfig = {
   },
   async headers() {
     return [
+      {
+        source: '/',
+        headers: [cspHeader],
+      },
+      {
+        source: '/:path*',
+        headers: [cspHeader],
+      },
+      {
+        source: '/game-build/:path*',
+        headers: [cspHeader],
+      },
       {
         source: '/game-build/:path*.wasm.br',
         headers: [
