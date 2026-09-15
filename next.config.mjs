@@ -1,19 +1,9 @@
 /** @type {import('next').NextConfig} */
-const CONTENT_SECURITY_POLICY = [
-  "default-src 'self'",
-  // Unity WebGL / Emscripten and some Next tooling need eval + WASM compile.
-  "script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval' 'unsafe-inline' blob:",
-  "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob:",
-  "font-src 'self'",
-  "connect-src 'self' blob: https: wss:",
-  "worker-src 'self' blob:",
-  "child-src 'self' blob:",
-  "frame-src 'self'",
-  "media-src 'self' blob:",
-  "object-src 'none'",
-  "base-uri 'self'",
-].join('; ')
+const ROOT_CSP =
+  "default-src 'self'; script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval' 'unsafe-inline' blob:; style-src 'self' 'unsafe-inline'; frame-src 'self' blob:; img-src 'self' data: blob:;"
+
+const GAME_CSP =
+  "default-src 'self'; script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval' 'unsafe-inline' blob:; frame-ancestors 'self';"
 
 const nextConfig = {
   // Route handlers persist to local Postgres, so this cannot be a static
@@ -30,9 +20,11 @@ const nextConfig = {
     return [
       {
         source: '/:path*',
-        headers: [
-          { key: 'Content-Security-Policy', value: CONTENT_SECURITY_POLICY },
-        ],
+        headers: [{ key: 'Content-Security-Policy', value: ROOT_CSP }],
+      },
+      {
+        source: '/game-build/:path*',
+        headers: [{ key: 'Content-Security-Policy', value: GAME_CSP }],
       },
       {
         source: '/game-build/:path*.wasm',
