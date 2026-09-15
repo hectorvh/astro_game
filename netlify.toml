@@ -4,9 +4,27 @@
 [build.environment]
   NODE_VERSION = "22"
   NEXT_PUBLIC_JERBOA_BACKEND = "memory"
+  NODE_OPTIONS = "--max-old-space-size=4096"
+
+# Do not recompress Unity's pre-brotli .br files (double-compress breaks the player).
+[build.processing]
+  skip_processing = true
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
+
+# Keep the serverless function under Netlify's 250MB unzipped limit.
+[functions]
+  included_files = [
+    "!android/**",
+    "!ios/**",
+    "!game-buildV7/**",
+    "!public/3d/bunny3D/**",
+    "!public/3d/laika3D/**",
+    "!public/dev/**",
+    "!node_modules/@capacitor/**",
+    "!node_modules/supabase/**",
+  ]
 
 [[headers]]
   for = "/game-build/Build/*.wasm.br"

@@ -10,6 +10,18 @@ const nextConfig = {
     unoptimized: true,
   },
   transpilePackages: ['three', '@react-three/fiber', '@react-three/drei'],
+  outputFileTracingExcludes: {
+    '*': [
+      './android/**',
+      './ios/**',
+      './game-buildV7/**',
+      './public/3d/bunny3D/**',
+      './public/3d/laika3D/**',
+      './public/dev/**',
+      './node_modules/@capacitor/**',
+      './node_modules/supabase/**',
+    ],
+  },
   async headers() {
     return [
       {
