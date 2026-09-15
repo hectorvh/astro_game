@@ -5,6 +5,10 @@
 # into game-buildV7/. Netlify publishes a copy of public/ without those
 # repo-root folders, so those links would 404. On Netlify we replace them
 # with real copies.
+#
+# Unused Unity package dumps, prototype images, and source .unitypackage
+# files live under public/ (~300MB). They are not referenced by the app
+# and would be uploaded with the site, so they are stripped on Netlify only.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -26,9 +30,27 @@ copy_unity() {
   cp -a "$src/StreamingAssets" "$dest/StreamingAssets"
 }
 
+# Drop assets that are not served by the live app so the publish upload
+# stays under Netlify size/time limits.
+strip_unpublished_assets() {
+  echo "public/ before strip: $(du -sh "$ROOT/public" | cut -f1)"
+  rm -rf \
+    "$ROOT/public/3d/bunny3D" \
+    "$ROOT/public/3d/laika3D" \
+    "$ROOT/public/dev"
+  rm -f \
+    "$ROOT/public/3d/"*.unitypackage \
+    "$ROOT/public/videos/generate_a_video_intro_in_one.mp4"
+  echo "public/ after strip:  $(du -sh "$ROOT/public" | cut -f1)"
+}
+
 if [[ "${NETLIFY:-}" == "true" || "${FORCE_UNITY_COPY:-}" == "1" ]]; then
   echo "Copying Unity WebGL files into public/ (dereferenced)..."
   copy_unity "$SRC_DRIFT" "$DEST_DRIFT"
+fi
+
+if [[ "${NETLIFY:-}" == "true" ]]; then
+  strip_unpublished_assets
 fi
 
 cd "$ROOT"

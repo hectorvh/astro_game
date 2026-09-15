@@ -170,6 +170,6 @@ Config lives in `netlify.toml`. The site is a Next.js app (not a static export) 
 | Node | 22 (`NODE_VERSION` in `netlify.toml`) |
 | Backend | `NEXT_PUBLIC_JERBOA_BACKEND=memory` (build-time; guest play only) |
 
-`pnpm run build:netlify` copies `game-buildV7/Build`, `TemplateData`, and `StreamingAssets` into `public/game-build` as real files (the git symlinks would 404 on the CDN), then runs `next build`.
+`pnpm run build:netlify` copies `game-buildV7/Build`, `TemplateData`, and `StreamingAssets` into `public/game-build` as real files (the git symlinks would 404 on the CDN), strips unused Unity dumps under `public/3d/` and `public/dev/` so the upload stays small, then runs `next build`.
 
 On the live site, use **Access as Guest**. Sign-in and trials are not persisted in memory mode. For a hosted database, use Option C (Supabase) instead of local Postgres.
