@@ -243,7 +243,7 @@ Quiz JSON must stay in `StreamingAssets` so it is copied into builds and can be 
 
 ### WebGL player settings (required)
 
-The Next.js repo only ships the exported player (`game-buildV7/`). The following must be applied in the **Unity Editor** before File → Build, then the new `Build/`, `TemplateData/`, and `StreamingAssets/` trees dropped here.
+The Next.js repo only ships the exported player (`game-buildV8/`). The following must be applied in the **Unity Editor** before File → Build, then the new `Build/`, `TemplateData/`, and `StreamingAssets/` trees dropped here.
 
 1. **Keep physics types from being stripped.** Copy `unity-webgl/link.xml` from this repo into the Unity project’s `Assets/` folder (same filename). Runtime `AddComponent<SphereCollider>()` / `MeshCollider` on quiz and spawned objects otherwise fails: *Can't add component because class 'SphereCollider' doesn't exist!* (same for `MeshCollider`). Alternative: Player → Other Settings → Managed Stripping Level → Minimal.
 2. **No negative scale on ground tiles.** `GroundMoving/Ground1` … `Ground10` (and `Assets/Ground/Ground.prefab`) must have Scale.x / y / z all **positive**. PhysX cannot compute box-collider contacts on negative scale and players clip or snag. Mirror a tile with a 180° Y or Z rotation, not `scale.x = -1`.

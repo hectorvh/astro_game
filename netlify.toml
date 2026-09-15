@@ -4,51 +4,18 @@
 [build.environment]
   NODE_VERSION = "22"
   NEXT_PUBLIC_JERBOA_BACKEND = "memory"
-  NODE_OPTIONS = "--max-old-space-size=4096"
-
-# Do not recompress Unity's pre-brotli .br files (double-compress breaks the player).
-[build.processing]
-  skip_processing = true
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
-# Unity WebGL needs eval / WASM compile; a strict script-src blocks Galaxy Drift.
 [[headers]]
-  for = "/*"
-  [headers.values]
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval' 'unsafe-inline' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; font-src 'self'; connect-src 'self' blob: data: https:; worker-src 'self' blob:; frame-src 'self'; object-src 'none'; base-uri 'self'"
-
-# Keep the serverless function under Netlify's 250MB unzipped limit.
-[functions]
-  included_files = [
-    "!android/**",
-    "!ios/**",
-    "!game-buildV7/**",
-    "!public/3d/bunny3D/**",
-    "!public/3d/laika3D/**",
-    "!public/dev/**",
-    "!node_modules/@capacitor/**",
-    "!node_modules/supabase/**",
-  ]
-
-[[headers]]
-  for = "/game-build/Build/*.wasm.br"
+  for = "/game-build/Build/*.wasm"
   [headers.values]
     Content-Type = "application/wasm"
-    Content-Encoding = "br"
     Cache-Control = "public, max-age=31536000, immutable"
 
 [[headers]]
-  for = "/game-build/Build/*.data.br"
+  for = "/game-build/Build/*.data"
   [headers.values]
     Content-Type = "application/octet-stream"
-    Content-Encoding = "br"
-    Cache-Control = "public, max-age=31536000, immutable"
-
-[[headers]]
-  for = "/game-build/Build/*.js.br"
-  [headers.values]
-    Content-Type = "application/javascript"
-    Content-Encoding = "br"
     Cache-Control = "public, max-age=31536000, immutable"
