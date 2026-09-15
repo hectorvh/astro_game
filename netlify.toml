@@ -9,6 +9,11 @@
   package = "@netlify/plugin-nextjs"
 
 [[headers]]
+  for = "/*"
+  [headers.values]
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval' 'unsafe-inline' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' blob: https: wss:; worker-src 'self' blob:; child-src 'self' blob:; frame-src 'self'; media-src 'self' blob:; object-src 'none'; base-uri 'self'"
+
+[[headers]]
   for = "/game-build/Build/*.wasm"
   [headers.values]
     Content-Type = "application/wasm"
