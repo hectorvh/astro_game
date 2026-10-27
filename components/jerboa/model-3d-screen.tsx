@@ -42,8 +42,8 @@ export function Model3dScreen({
         <div className="flex items-start justify-between gap-3">
           <button
             type="button"
-            onClick={() => goTo('map')}
-            aria-label="Back to map"
+            onClick={() => goTo('title')}
+            aria-label="Back to title screen"
             className="pointer-events-auto flex size-12 items-center justify-center rounded-2xl border-2 border-primary/40 bg-card/90 text-foreground shadow-storybook backdrop-blur-sm transition-colors hover:bg-muted"
           >
             <ChevronLeft className="size-6" />
