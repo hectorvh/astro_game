@@ -50,8 +50,14 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${nunito.variable} ${baloo.variable} bg-background`}>
-      <body className="antialiased">{children}</body>
+    <html
+      lang="en"
+      className={`${nunito.variable} ${baloo.variable} bg-background`}
+      suppressHydrationWarning
+    >
+      <body className="antialiased" suppressHydrationWarning>
+        {children}
+      </body>
     </html>
   )
 }
