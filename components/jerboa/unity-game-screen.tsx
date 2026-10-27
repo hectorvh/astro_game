@@ -30,7 +30,7 @@ export function UnityGameScreen({ src, title }: UnityGameScreenProps) {
     function onMessage(event: MessageEvent) {
       if (event.source !== iframeRef.current?.contentWindow) return
       if (event.data?.type !== EXIT_MESSAGE) return
-      goTo('map')
+      goTo('title')
     }
 
     window.addEventListener('message', onMessage)
@@ -56,7 +56,7 @@ export function UnityGameScreen({ src, title }: UnityGameScreenProps) {
 
   return (
     <main
-      className="relative flex min-h-dvh w-full items-center justify-center overflow-hidden overscroll-none bg-[#231F20]"
+      className="relative flex min-h-dvh w-full items-center justify-center overflow-hidden overscroll-none bg-[#0c1220]"
       onPointerDown={focusGame}
     >
       <iframe

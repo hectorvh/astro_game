@@ -74,7 +74,7 @@ export function TitleScreen() {
           <nav className="mt-8 flex flex-col items-center gap-3 md:items-start" aria-label="Main menu">
             <button
               type="button"
-              onClick={() => goTo('map')}
+              onClick={() => goTo('minigame1')}
               className={`${ACTION_BTN} bg-primary text-primary-foreground hover:bg-teal-dark`}
             >
               <Play className="size-5" />

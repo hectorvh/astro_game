@@ -1,9 +1,28 @@
 /** @type {import('next').NextConfig} */
-const ROOT_CSP =
-  "default-src 'self'; script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval' 'unsafe-inline' blob:; style-src 'self' 'unsafe-inline'; frame-src 'self' blob:; img-src 'self' data: blob:;"
+const ROOT_CSP = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval' 'unsafe-inline' blob:",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob:",
+  "font-src 'self' data:",
+  "connect-src 'self' blob: data: https: wss:",
+  "worker-src 'self' blob:",
+  "child-src 'self' blob:",
+  "frame-src 'self' blob:",
+  "media-src 'self' blob:",
+].join('; ')
 
-const GAME_CSP =
-  "default-src 'self'; script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval' 'unsafe-inline' blob:; frame-ancestors 'self';"
+const GAME_CSP = [
+  "default-src 'self' blob:",
+  "script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval' 'unsafe-inline' blob:",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob:",
+  "connect-src 'self' blob: data:",
+  "worker-src 'self' blob:",
+  "child-src 'self' blob:",
+  "media-src 'self' blob:",
+  "frame-ancestors 'self'",
+].join('; ')
 
 const nextConfig = {
   // Route handlers persist to local Postgres, so this cannot be a static
