@@ -27,15 +27,22 @@ const nextConfig = {
   },
   transpilePackages: ['three', '@react-three/fiber', '@react-three/drei'],
   async headers() {
+    const csp =
+      process.env.NODE_ENV === 'development'
+        ? []
+        : [
+            {
+              source: '/',
+              headers: [{ key: 'Content-Security-Policy', value: CONTENT_SECURITY_POLICY }],
+            },
+            {
+              source: '/:path*',
+              headers: [{ key: 'Content-Security-Policy', value: CONTENT_SECURITY_POLICY }],
+            },
+          ]
+
     return [
-      {
-        source: '/',
-        headers: [{ key: 'Content-Security-Policy', value: CONTENT_SECURITY_POLICY }],
-      },
-      {
-        source: '/:path*',
-        headers: [{ key: 'Content-Security-Policy', value: CONTENT_SECURITY_POLICY }],
-      },
+      ...csp,
       {
         source: '/game-build/:path*.wasm',
         headers: [
