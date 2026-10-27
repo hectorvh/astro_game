@@ -1,6 +1,8 @@
 /** @type {import('next').NextConfig} */
-const ROOT_CSP = [
-  "default-src 'self'",
+// One policy for every route. Two Content-Security-Policy headers are AND-ed
+// by the browser, so a second stricter rule would block Unity's eval/WASM.
+const CONTENT_SECURITY_POLICY = [
+  "default-src 'self' blob:",
   "script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval' 'unsafe-inline' blob:",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob:",
@@ -9,17 +11,6 @@ const ROOT_CSP = [
   "worker-src 'self' blob:",
   "child-src 'self' blob:",
   "frame-src 'self' blob:",
-  "media-src 'self' blob:",
-].join('; ')
-
-const GAME_CSP = [
-  "default-src 'self' blob:",
-  "script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval' 'unsafe-inline' blob:",
-  "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob:",
-  "connect-src 'self' blob: data:",
-  "worker-src 'self' blob:",
-  "child-src 'self' blob:",
   "media-src 'self' blob:",
   "frame-ancestors 'self'",
 ].join('; ')
@@ -38,12 +29,12 @@ const nextConfig = {
   async headers() {
     return [
       {
-        source: '/:path*',
-        headers: [{ key: 'Content-Security-Policy', value: ROOT_CSP }],
+        source: '/',
+        headers: [{ key: 'Content-Security-Policy', value: CONTENT_SECURITY_POLICY }],
       },
       {
-        source: '/game-build/:path*',
-        headers: [{ key: 'Content-Security-Policy', value: GAME_CSP }],
+        source: '/:path*',
+        headers: [{ key: 'Content-Security-Policy', value: CONTENT_SECURITY_POLICY }],
       },
       {
         source: '/game-build/:path*.wasm',
