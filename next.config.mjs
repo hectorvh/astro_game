@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
-// One policy for every route. Two Content-Security-Policy headers are AND-ed
-// by the browser, so a second stricter rule would block Unity's eval/WASM.
+// Keep this string identical to netlify.toml [[headers]]. The browser ANDs
+// every Content-Security-Policy header, so a second stricter copy would block
+// Unity's eval/WASM. 'unsafe-eval' is required by the Unity WebGL loader.
 const CONTENT_SECURITY_POLICY = [
   "default-src 'self' blob:",
   "script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval' 'unsafe-inline' blob:",
@@ -13,6 +14,7 @@ const CONTENT_SECURITY_POLICY = [
   "frame-src 'self' blob:",
   "media-src 'self' blob:",
   "frame-ancestors 'self'",
+  'upgrade-insecure-requests',
 ].join('; ')
 
 const nextConfig = {
@@ -32,14 +34,13 @@ const nextConfig = {
   },
   transpilePackages: ['three', '@react-three/fiber', '@react-three/drei'],
   async headers() {
+    // On Netlify, CSP comes only from netlify.toml so the browser sees a
+    // single policy (two CSP headers are AND-ed and a mismatch blocks Unity).
+    // Elsewhere (`next start`), this header is the sole CSP source.
     const csp =
-      process.env.NODE_ENV === 'development'
+      process.env.NODE_ENV === 'development' || process.env.NETLIFY
         ? []
         : [
-            {
-              source: '/',
-              headers: [{ key: 'Content-Security-Policy', value: CONTENT_SECURITY_POLICY }],
-            },
             {
               source: '/:path*',
               headers: [{ key: 'Content-Security-Policy', value: CONTENT_SECURITY_POLICY }],

@@ -5,9 +5,10 @@ const config: CapacitorConfig = {
   appName: 'Astro Bunny',
   webDir: 'capacitor-www',
   server: {
-    url: 'https://astrobunnygame.netlify.app/',
-    cleartext: false
-  }
+    // Canonical HTTPS host (custom domain). Never use http:// or cleartext.
+    url: 'https://astrogame.hectorvh.com/',
+    cleartext: false,
+  },
 };
 
 export default config;

@@ -11,7 +11,9 @@
 [[headers]]
   for = "/*"
   [headers.values]
-    Content-Security-Policy = "default-src 'self' blob:; script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval' 'unsafe-inline' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' blob: data: https: wss:; worker-src 'self' blob:; child-src 'self' blob:; frame-src 'self' blob:; media-src 'self' blob:; frame-ancestors 'self';"
+    # Must stay identical to CONTENT_SECURITY_POLICY in next.config.mjs.
+    # 'unsafe-eval' is required by the Unity WebGL loader (Emscripten).
+    Content-Security-Policy = "default-src 'self' blob:; script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval' 'unsafe-inline' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' blob: data: https: wss:; worker-src 'self' blob:; child-src 'self' blob:; frame-src 'self' blob:; media-src 'self' blob:; frame-ancestors 'self'; upgrade-insecure-requests"
 
 # Unity Brotli files. Exact paths (Netlify's * is a trailing splat), so update
 # these names with each new build. Content-Encoding lets the browser decompress.
