@@ -1,5 +1,6 @@
 'use client'
 
+import { AudioPrefsProvider } from '@/lib/jerboa/audio-prefs'
 import { SessionProvider, useSession } from '@/lib/jerboa/session-context'
 import { PanelStage } from './scene'
 import { StartScreen } from './start-screen'
@@ -11,7 +12,7 @@ import { DetailsScreen } from './details-screen'
 import { InformationScreen } from './information-screen'
 import { ConsentScreen } from './consent-screen'
 import { DeclinedScreen } from './declined-screen'
-import { TitleScreen } from './title-screen'
+import { MenuScreen } from './menu-screen'
 import { MinigameOneScreen } from './minigame-one-screen'
 import { Bird3dScreen, Bunny3dScreen, Jerboa3dScreen } from './jerboa-3d-screen'
 
@@ -74,7 +75,7 @@ function CurrentScreen() {
         </PanelStage>
       )
     case 'menu':
-      return <TitleScreen />
+      return <MenuScreen />
     case 'minigame1':
       return <MinigameOneScreen />
     case 'jerboa3d':
@@ -91,7 +92,9 @@ function CurrentScreen() {
 export function JourneyApp() {
   return (
     <SessionProvider>
-      <CurrentScreen />
+      <AudioPrefsProvider>
+        <CurrentScreen />
+      </AudioPrefsProvider>
     </SessionProvider>
   )
 }

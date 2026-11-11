@@ -42,7 +42,20 @@
   --color-jupiter: var(--jupiter);
   --color-hud-text: var(--hud-text);
 
+  --color-hud-bg: var(--hud-bg);
+  --color-hud-bg-2: var(--hud-bg-2);
+  --color-hud-panel: var(--hud-panel);
+  --color-hud-ink: var(--hud-ink);
+  --color-hud-mute: var(--hud-mute);
+  --color-hud-cyan: var(--hud-cyan);
+  --color-hud-amber: var(--hud-amber);
+  --color-hud-cyan-dim: var(--hud-cyan-dim);
+  --color-hud-cyan-faint: var(--hud-cyan-faint);
+
   --font-sans: var(--font-nunito), ui-sans-serif, system-ui, sans-serif;
+  --font-hud-display: var(--font-hud-display), 'Arial Narrow', sans-serif;
+  --font-hud-body: var(--font-hud-body), 'Segoe UI', system-ui, sans-serif;
+  --font-hud-mono: var(--font-hud-mono), ui-monospace, 'SFMono-Regular', Menlo, monospace;
   --font-display: var(--font-baloo), var(--font-nunito), ui-sans-serif, system-ui, sans-serif;
 
   --radius-sm: calc(var(--radius) * 0.6);
@@ -113,6 +126,23 @@
   --ring: #2fd8ff;
 
   --radius: 1rem;
+
+  /* Portfolio HUD. Existing screens do not use these yet. */
+  --hud-bg: #0a0e14;
+  --hud-bg-2: #0f1620;
+  --hud-panel: rgba(11, 17, 25, 0.82);
+  --hud-panel-solid: #0d141d;
+  --hud-cyan: #00e5ff;
+  --hud-cyan-dim: rgba(0, 229, 255, 0.28);
+  --hud-cyan-faint: rgba(0, 229, 255, 0.1);
+  --hud-amber: #ff9100;
+  --hud-amber-dim: rgba(255, 145, 0, 0.35);
+  --hud-ink: #e6edf3;
+  --hud-mute: #8296ab;
+  /* --hud-mute-2 (#56687A) on #0A0E14 is below 4.5:1. Use it only for
+     decorative lines and disabled states, never for text people must read. */
+  --hud-mute-2: #56687a;
+  --hud-ok: #3ddc84;
 }
 
 @layer base {
@@ -121,6 +151,161 @@
   }
   body {
     @apply bg-background text-foreground font-sans;
+  }
+}
+
+@layer components {
+  /* Children that must sit above the grid and scanlines need
+     position: relative; z-index: 1. The overlays are the stage's
+     ::before and ::after, and they paint over in-flow content. */
+  .hud-stage {
+    position: relative;
+    overflow: hidden;
+    color: var(--hud-ink);
+    font-family: var(--font-hud-body), 'Segoe UI', system-ui, sans-serif;
+    background:
+      radial-gradient(ellipse 60% 55% at 38% 46%, rgba(0, 229, 255, 0.07), transparent 70%),
+      radial-gradient(ellipse 120% 90% at 50% 120%, rgba(255, 145, 0, 0.05), transparent 60%),
+      var(--hud-bg);
+  }
+  .hud-stage::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.5;
+    background-image:
+      linear-gradient(rgba(130, 150, 171, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(130, 150, 171, 0.05) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: radial-gradient(ellipse 80% 70% at 40% 50%, #000 30%, transparent 80%);
+    -webkit-mask-image: radial-gradient(ellipse 80% 70% at 40% 50%, #000 30%, transparent 80%);
+  }
+  .hud-stage::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.12) 0 1px, transparent 1px 3px),
+      radial-gradient(ellipse 90% 80% at 45% 50%, transparent 55%, rgba(0, 0, 0, 0.55));
+  }
+
+  .hud-card {
+    position: relative;
+    padding: 12px 14px;
+    background: linear-gradient(180deg, rgba(15, 22, 32, 0.72), rgba(10, 14, 20, 0.6));
+    border: 1px solid var(--hud-cyan-faint);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+  .hud-card::before,
+  .hud-card::after {
+    content: '';
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-color: var(--hud-cyan);
+    border-style: solid;
+  }
+  .hud-card::before {
+    top: -1px;
+    left: -1px;
+    border-width: 1px 0 0 1px;
+  }
+  .hud-card::after {
+    right: -1px;
+    bottom: -1px;
+    border-width: 0 1px 1px 0;
+  }
+  @supports not (backdrop-filter: blur(1px)) {
+    .hud-card {
+      background: var(--hud-panel-solid);
+    }
+  }
+
+  .hud-eyebrow {
+    font-family: var(--font-hud-mono), ui-monospace, Menlo, monospace;
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--hud-cyan);
+  }
+
+  .hud-tag {
+    font-family: var(--font-hud-mono), ui-monospace, Menlo, monospace;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--hud-mute);
+  }
+
+  .hud-icon-btn {
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    color: var(--hud-ink);
+    background: rgba(8, 14, 22, 0.32);
+    border: 1px solid rgba(0, 229, 255, 0.35);
+    transition:
+      color 0.2s,
+      border-color 0.2s,
+      background 0.2s;
+  }
+  .hud-icon-btn:hover,
+  .hud-icon-btn:focus-visible {
+    color: var(--hud-amber);
+    border-color: rgba(255, 145, 0, 0.7);
+    background: rgba(8, 14, 22, 0.48);
+  }
+  .hud-icon-btn svg {
+    width: 22px;
+    height: 22px;
+  }
+  .hud-icon-btn[data-tip] {
+    position: relative;
+  }
+  .hud-icon-btn[data-tip]::after {
+    content: attr(data-tip);
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    white-space: nowrap;
+    font-family: var(--font-hud-mono), ui-monospace, Menlo, monospace;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    color: var(--hud-ink);
+    background: var(--hud-panel-solid);
+    border: 1px solid var(--hud-cyan-faint);
+    padding: 3px 7px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s;
+  }
+  .hud-icon-btn[data-tip]:hover::after,
+  .hud-icon-btn[data-tip]:focus-visible::after {
+    opacity: 1;
+  }
+
+  .hud-key {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 22px;
+    padding: 0 6px;
+    border: 1px solid var(--hud-mute-2);
+    border-radius: 3px;
+    font-family: var(--font-hud-mono), ui-monospace, Menlo, monospace;
+    font-size: 12px;
+    color: var(--hud-ink);
+  }
+
+  .hud-focus:focus-visible {
+    outline: 2px solid var(--hud-amber);
+    outline-offset: 3px;
   }
 }
 
@@ -153,6 +338,21 @@
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
+  }
+  .hud-stage,
+  .hud-stage::before,
+  .hud-stage::after,
+  .hud-card,
+  .hud-card::before,
+  .hud-card::after,
+  .hud-eyebrow,
+  .hud-tag,
+  .hud-icon-btn,
+  .hud-icon-btn::after,
+  .hud-key,
+  .hud-focus {
+    transition: none;
+    animation: none;
   }
 }
 

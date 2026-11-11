@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useRef, useState } from 'react'
 import { Controller, useForm, type DefaultValues } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
@@ -96,6 +97,7 @@ export function DetailsScreen({ mode }: { mode: 'signup' | 'settings' }) {
           <ArrowLeft className="size-5" />
           Back
         </button>
+        <LeaveControl guest />
       </Panel>
     )
   }
@@ -260,6 +262,69 @@ export function DetailsScreen({ mode }: { mode: 'signup' | 'settings' }) {
           </button>
         </div>
       </form>
+      {mode === 'settings' ? <LeaveControl guest={false} /> : null}
     </Panel>
+  )
+}
+
+function LeaveControl({ guest }: { guest: boolean }) {
+  const { resetSession } = useSession()
+  const [open, setOpen] = useState(false)
+  const stayRef = useRef<HTMLButtonElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    stayRef.current?.focus()
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false)
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [open])
+
+  return (
+    <div className="mt-8 border-t border-border pt-6">
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="flex h-12 w-full items-center justify-center rounded-2xl border-2 border-input bg-background px-6 text-lg font-bold text-foreground transition-colors hover:bg-muted"
+      >
+        {guest ? 'Leave guest mode' : 'Log out'}
+      </button>
+      {open ? (
+        <div
+          className="fixed inset-0 z-40 flex items-center justify-center bg-black/55 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="leave-title"
+        >
+          <div className="w-full max-w-sm rounded-3xl border-2 border-primary/40 bg-card p-6 shadow-storybook">
+            <p id="leave-title" className="text-lg leading-relaxed text-foreground">
+              Return to the start? Your saved answers stay saved.
+            </p>
+            <div className="mt-6 flex flex-col gap-3">
+              <button
+                ref={stayRef}
+                type="button"
+                onClick={() => setOpen(false)}
+                className="flex h-12 items-center justify-center rounded-2xl border-2 border-input bg-background text-lg font-bold text-foreground"
+              >
+                Stay
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setOpen(false)
+                  resetSession()
+                }}
+                className="flex h-12 items-center justify-center rounded-2xl bg-primary text-lg font-bold text-primary-foreground"
+              >
+                Return to the start
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </div>
   )
 }

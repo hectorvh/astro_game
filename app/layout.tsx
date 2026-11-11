@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next'
+import { Barlow, Chakra_Petch, IBM_Plex_Mono } from 'next/font/google'
 import localFont from 'next/font/local'
 import './globals.css'
 
@@ -33,6 +34,27 @@ const baloo = localFont({
   display: 'swap',
 })
 
+const hudDisplay = Chakra_Petch({
+  weight: ['400', '500', '600', '700'],
+  subsets: ['latin', 'latin-ext'],
+  variable: '--font-hud-display',
+  display: 'swap',
+})
+
+const hudBody = Barlow({
+  weight: ['400', '500', '600'],
+  subsets: ['latin', 'latin-ext'],
+  variable: '--font-hud-body',
+  display: 'swap',
+})
+
+const hudMono = IBM_Plex_Mono({
+  weight: ['400', '500'],
+  subsets: ['latin', 'latin-ext'],
+  variable: '--font-hud-mono',
+  display: 'swap',
+})
+
 export const metadata: Metadata = {
   title: 'Astro Bunny Game',
   applicationName: 'Astro Bunny Game',
@@ -58,7 +80,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${nunito.variable} ${baloo.variable} bg-background`}
+      className={`${nunito.variable} ${baloo.variable} ${hudDisplay.variable} ${hudBody.variable} ${hudMono.variable} bg-background`}
       suppressHydrationWarning
     >
       <body className="antialiased" suppressHydrationWarning>

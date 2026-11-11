@@ -176,3 +176,43 @@ Config lives in `netlify.toml`. The site is a Next.js app (not a static export) 
 `pnpm run build:netlify` copies `game-buildV9-02/Build`, `TemplateData`, and `StreamingAssets` into `public/game-build` as real files (the git symlinks would 404 on the CDN), then runs `next build`.
 
 On the live site, use **Access as Guest**. Sign-up and trials are not persisted in memory mode. For a hosted database, use Option C (Supabase) instead of local Postgres.
+
+## HUD theme
+
+Tokens and classes for the level menu. Nothing on screen uses them yet. Existing screens keep Nunito and Baloo.
+
+The fonts (Chakra Petch, Barlow, IBM Plex Mono) are loaded with `next/font` and self-hosted at build time. There is no request to Google at runtime.
+
+### Tokens
+
+| Token | Value | Use |
+| --- | --- | --- |
+| `--hud-bg` / `bg-hud-bg` | `#0A0E14` | Page background. |
+| `--hud-bg-2` / `bg-hud-bg-2` | `#0F1620` | A slightly lifted surface. |
+| `--hud-panel` / `bg-hud-panel` | `rgba(11,17,25,.82)` | Translucent panel fill. |
+| `--hud-panel-solid` | `#0d141d` | Same panel when blur is unavailable. |
+| `--hud-cyan` / `text-hud-cyan` | `#00E5FF` | Labels, links, brackets. |
+| `--hud-cyan-dim` / `border-hud-cyan-dim` | `rgba(0,229,255,.28)` | Stronger cyan borders. |
+| `--hud-cyan-faint` / `border-hud-cyan-faint` | `rgba(0,229,255,.10)` | Hairline panel borders. |
+| `--hud-amber` / `text-hud-amber` | `#FF9100` | Focus, hover, emphasis. |
+| `--hud-amber-dim` | `rgba(255,145,0,.35)` | Amber borders. |
+| `--hud-ink` / `text-hud-ink` | `#E6EDF3` | Body text on the dark background. |
+| `--hud-mute` / `text-hud-mute` | `#8296AB` | Secondary text. |
+| `--hud-mute-2` | `#56687A` | Decorative lines and disabled states only. On `#0A0E14` it is below 4.5:1, so do not use it for text people must read. |
+| `--hud-ok` | `#3DDC84` | A positive status, not a “correct answer” cue. |
+
+`font-hud-display`, `font-hud-body`, and `font-hud-mono` are the three HUD families.
+
+### Classes
+
+| Class | When to use |
+| --- | --- |
+| `.hud-stage` | Full-bleed backdrop: cyan and amber glows, blueprint grid, scanlines, vignette. Children that must sit above the overlays need `position: relative; z-index: 1`. |
+| `.hud-card` | A blurred panel with cyan corner brackets. Falls back to a solid fill when `backdrop-filter` is missing. |
+| `.hud-eyebrow` | Short cyan mono label above a title. |
+| `.hud-tag` | Muted uppercase mono label. 12px so it stays readable. |
+| `.hud-icon-btn` | 48×48 round icon button. Set `data-tip` for the hover/focus label. |
+| `.hud-key` | A keyboard keycap. |
+| `.hud-focus` | Amber 2px focus ring with a 3px offset. |
+
+Reduced motion turns the HUD transitions and animations off. The screen still shows the same layout.
