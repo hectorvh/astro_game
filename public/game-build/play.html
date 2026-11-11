@@ -200,8 +200,9 @@
       }
 
       /* Shell contract: docs/unity-shell-contract.md in the web repo.
-         Shell -> Unity: ?level=<1-4>&mode=<assessment|trial>&embed=1&muted=<0|1>
-         (Unity reads them from Application.absoluteURL) and { type: "setMuted", muted }.
+         Shell -> Unity: ?level=<1-4>&mode=<assessment|trial>&embed=1&muted=<0|1>&fs=<0|1>
+         (Unity reads them from Application.absoluteURL), { type: "setMuted", muted } and
+         { type: "fullscreenChanged", active }.
          Unity -> shell: levelComplete and exit(pause-menu) come straight from Unity
          (ShellBridge.jslib). This page only sends "ready" and exit(quit).
          Never send personal or research data through these messages. */
@@ -212,6 +213,16 @@
         if (window.parent === window) return;
         try {
           window.parent.postMessage(message, location.origin);
+        } catch (err) {}
+      }
+
+      // Last full-screen state from the shell (null until it sends one).
+      var shellFullscreen = null;
+
+      function setUnityFullscreen(active) {
+        if (!unityInstance || typeof unityInstance.SendMessage !== "function") return;
+        try {
+          unityInstance.SendMessage("ShellBridge", "SetFullscreenFromShell", active ? "1" : "0");
         } catch (err) {}
       }
 
@@ -228,11 +239,13 @@
          seconds. Unity starts unmuted, so this only runs while muted.
          TODO(added 2026-11-11): remove once AudioManager reads muted=1 from
          Application.absoluteURL in Awake (see docs/unity-shell-contract.md). */
-      var MUTE_RETRY_MS = [500, 1500, 3000, 5000, 8000, 12000];
-      function applyMutedWhenSceneLoads() {
-        MUTE_RETRY_MS.forEach(function (ms) {
+      var SCENE_RETRY_MS = [500, 1500, 3000, 5000, 8000, 12000];
+      function applyShellStateWhenSceneLoads() {
+        SCENE_RETRY_MS.forEach(function (ms) {
           window.setTimeout(function () {
             if (shellMuted) setUnityMuted(true);
+            // ShellBridge may not exist yet at "ready" either; re-apply the last known state.
+            if (shellFullscreen !== null) setUnityFullscreen(shellFullscreen);
           }, ms);
         });
       }
@@ -240,9 +253,14 @@
       window.addEventListener("message", function (event) {
         if (event.source !== window.parent || event.origin !== location.origin) return;
         var data = event.data;
-        if (!data || data.type !== "setMuted") return;
-        shellMuted = !!data.muted;
-        setUnityMuted(shellMuted);
+        if (!data) return;
+        if (data.type === "setMuted") {
+          shellMuted = !!data.muted;
+          setUnityMuted(shellMuted);
+        } else if (data.type === "fullscreenChanged") {
+          shellFullscreen = !!data.active;
+          setUnityFullscreen(shellFullscreen);
+        }
       });
 
       /* Only for Unity's Application.Quit path (see hookUnityExit). The pause-menu
@@ -433,7 +451,7 @@
           hookUnityExit(instance);
           postToShell({ type: "ready" });
           if (shellMuted) setUnityMuted(true);
-          applyMutedWhenSceneLoads();
+          applyShellStateWhenSceneLoads();
           setProgress(1);
           statusLabel.textContent = "Starting Galaxy Drift…";
           setTimeout(hideOverlay, SPLASH_MASK_MS);

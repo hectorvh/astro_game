@@ -1,5 +1,7 @@
 'use client'
 
+// Development only: warns when WebGL contexts pile up (no-op in production).
+import '@/lib/jerboa/dev-webgl-counter'
 import { AudioPrefsProvider } from '@/lib/jerboa/audio-prefs'
 import { SessionProvider, useSession } from '@/lib/jerboa/session-context'
 import { PanelStage } from './scene'

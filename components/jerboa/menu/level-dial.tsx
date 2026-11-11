@@ -110,6 +110,25 @@ function FitCamera() {
   return null
 }
 
+/** Frees the renderer when the Canvas unmounts. R3F 9 calls gl.forceContextLoss()
+ *  500 ms after unmount but not gl.dispose(); and if the browser already dropped
+ *  the context, that forceContextLoss() logs "loseContext: context already lost",
+ *  so it is turned into a no-op in that case. */
+function ReleaseRenderer() {
+  const gl = useThree((state) => state.gl)
+  useEffect(
+    () => () => {
+      if (gl.getContext().isContextLost()) {
+        gl.forceContextLoss = () => {}
+        return
+      }
+      gl.dispose()
+    },
+    [gl],
+  )
+  return null
+}
+
 function DialRig({
   dialRef,
   bridgeRef,
@@ -475,6 +494,7 @@ function Scene({
   return (
     <>
       <FitCamera />
+      <ReleaseRenderer />
       <ambientLight intensity={0.55} />
       <Reticles />
       <DialRig dialRef={dialRef} bridgeRef={bridgeRef} />

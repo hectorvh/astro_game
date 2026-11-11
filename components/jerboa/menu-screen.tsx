@@ -6,6 +6,8 @@ import { useAudioPrefs } from '@/lib/jerboa/audio-prefs'
 import { enterFullscreen } from '@/lib/jerboa/fullscreen'
 import { canPractice, getLevelStatus, LEVELS } from '@/lib/jerboa/levels'
 import { useSession } from '@/lib/jerboa/session-context'
+import { detectWebGL } from '@/lib/jerboa/webgl-support'
+import { beginWebGLVisit } from '@/lib/jerboa/dev-webgl-counter'
 import { createDial, levelUnlocked, mod, type MenuBridge } from './menu/dial-geometry'
 import { LevelDial } from './menu/level-dial'
 import {
@@ -55,19 +57,12 @@ function useReducedMotion(): boolean {
   )
 }
 
-function webglAvailable(): boolean {
-  try {
-    const canvas = document.createElement('canvas')
-    return !!(canvas.getContext('webgl2') || canvas.getContext('webgl'))
-  } catch {
-    return false
-  }
-}
-
+// detectWebGL() probes once per page load and caches the answer. React calls
+// getSnapshot on every render, so a probe here would leak a context each time.
 function useWebGL(): boolean {
   return useSyncExternalStore(
     () => () => {},
-    webglAvailable,
+    detectWebGL,
     () => true,
   )
 }
@@ -96,6 +91,9 @@ export function MenuScreen() {
   const reduceRef = useRef(reduce)
 
   const [canvasKey, setCanvasKey] = useState(0)
+  // Starts the dev counting window before any child (the dial Canvas) creates its
+  // context; an effect here would run after the children's effects. No-op in production.
+  useState(() => beginWebGLVisit('level menu'))
   const bridgeRef = useRef<MenuBridge>({
     overlay: false,
     reduce: false,

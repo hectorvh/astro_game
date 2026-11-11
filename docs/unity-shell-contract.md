@@ -15,7 +15,7 @@ shell's data-access layer.
 ## 1. Shell → Unity: URL query
 
 ```
-/game-build/play.html?level=<1-4>&mode=<assessment|trial>&embed=1&muted=<0|1>
+/game-build/play.html?level=<1-4>&mode=<assessment|trial>&embed=1&muted=<0|1>&fs=<0|1>
 ```
 
 | Param   | Meaning                                                                 |
@@ -24,6 +24,7 @@ shell's data-access layer.
 | `mode`  | `assessment` for a mission (**Launch mission**), `trial` for a practice run (**Practice**). Always sent. |
 | `embed` | Always `1` when the shell embeds the player. Unity can hide its own quit/title UI. |
 | `muted` | `1` if the participant muted sound in the menu, else `0`.               |
+| `fs`    | `1` if the shell can switch full screen on and off here, else `0` (iPhone browsers, the native Capacitor app, browsers without the API). Unity hides its Full screen button when `0`. |
 
 The shell **always** sends `mode`. Without it Unity falls back to
 `BoxSpawner.gameMode`, which defaults to `GameMode.Trial`, and a mission would be
@@ -32,8 +33,8 @@ recorded as practice.
 Unity reads these from `Application.absoluteURL`.
 
 The shell builds this URL once when the game opens (`unityPlayerUrl()` in
-`lib/jerboa/unity-messages.ts`). Changing mute later does **not** reload the
-iframe; see section 3.
+`lib/jerboa/unity-messages.ts`). Changing mute or full screen later does **not**
+reload the iframe; see section 3.
 
 ## 2. Unity → shell: `window.parent.postMessage`
 
@@ -46,10 +47,26 @@ Plain objects, posted with `targetOrigin = location.origin` (never `'*'`).
 | `{ type: 'exit', reason: 'pause-menu' }`        | Unity (`ShellBridge.jslib`) | Participant taps Exit in Unity's pause menu        | Back to the menu, no video                  |
 | `{ type: 'exit', reason: 'quit' }`              | `play.html`                 | Unity's `Application.Quit()` runs                  | Back to the menu, no video                  |
 | `{ type: 'astroBunnyExit' }` *(legacy)*         | `play.html`, with `exit(quit)` | Same as `exit`                                  | Same as `exit`. TODO (added 2026-11-11): remove in the release after game-buildV10. |
+| `{ type: 'mutedChanged', muted: boolean }`      | Unity (`ShellBridge.jslib`) | Participant toggles Unity's own Mute button        | Saves the mute preference (the menu shows it after Exit; it survives a reload). Not terminal. No `setMuted` is echoed back. |
+| `{ type: 'toggleFullscreen' }`                  | Unity (`ShellBridge.jslib`) | Participant presses Unity's Full screen button (only shown when `fs=1`) | Exits full screen if active, otherwise enters it. Not terminal. Answers with `fullscreenChanged`. |
 
 The shell accepts a message only if `event.source` is the game iframe and
-`event.origin` is the page's own origin. Unknown types are ignored. Only the
-**first** `levelComplete` or `exit` per game session is acted on.
+`event.origin` is the page's own origin. Unknown or malformed types are ignored
+(`mutedChanged` needs a boolean `muted`). Only the **first** `levelComplete` or
+`exit` per game session is acted on; `mutedChanged` and `toggleFullscreen` can
+arrive any number of times.
+
+### Full screen belongs to the shell page
+
+The shell page (`document.documentElement`) is the full-screen element, so the
+menu and the game share one full-screen state. Unity must not call
+`requestFullscreen` itself (`Screen.fullScreen`, `unityInstance.SetFullscreen`),
+and the shell never makes the iframe element full screen. On `toggleFullscreen`
+the shell calls `requestFullscreen` / `exitFullscreen` synchronously in the
+message handler: the click inside the iframe gives the parent page user
+activation for a few seconds, which the browser requires. If the browser still
+refuses, the shell logs one `console.warn` and nothing changes; Unity's icon stays
+right because it follows `fullscreenChanged`, not its own click.
 
 ### Practice runs (`mode=trial`)
 
@@ -121,6 +138,26 @@ public void SetMutedFromShell(string value) {
 }
 ```
 
+`SetMutedFromShell` must treat an unchanged value as a no-op. When the
+participant mutes inside the game, Unity posts `mutedChanged`; the shell saves it
+and does not send `setMuted` back.
+
+```js
+{ type: 'fullscreenChanged', active: boolean }
+```
+
+Sent on every `fullscreenchange` of the shell page (Unity's button, the menu's
+button, Esc, Android back, system gestures) and once after `ready` with the
+current state. `play.html` forwards it with the same source/origin checks:
+
+```js
+unityInstance.SendMessage('ShellBridge', 'SetFullscreenFromShell', active ? '1' : '0')
+```
+
+`play.html` keeps the last state and re-applies it with the same retry as mute,
+in case `ShellBridge` does not exist yet at `ready`. Unity uses it only to draw
+its Full screen icon (enter vs exit).
+
 ## 4. Build files and headers
 
 The shell loads `game-buildV10` through the symlinks in `public/game-build/`
@@ -138,7 +175,10 @@ and `next.config.mjs` (`pnpm start`).
 In `pnpm dev` only, while the game screen is open:
 
 ```js
-__astroBunnyDev.completeLevel(1) // same handler as a real levelComplete message
+__astroBunnyDev.completeLevel(1)          // same handler as a real levelComplete message
+__astroBunnyDev.setMutedFromGame(true)    // same handler as mutedChanged
+__astroBunnyDev.toggleFullscreenFromGame() // same as toggleFullscreen; needs a user
+                                           // gesture, so call it from a click handler
 ```
 
 ## Where the code lives

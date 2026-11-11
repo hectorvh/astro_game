@@ -183,6 +183,12 @@ Config lives in `netlify.toml`. The site is a Next.js app (not a static export) 
 
 On the live site, use **Access as Guest**. Sign-up and trials are not persisted in memory mode. For a hosted database, use Option C (Supabase) instead of local Postgres.
 
+## Development checks
+
+**WebGL context counter.** In `pnpm dev` only, `lib/jerboa/dev-webgl-counter.ts` (imported by `journey-app.tsx`) counts every WebGL context the page creates. It logs a `console.warn` when one level-menu visit creates more than 3, and exposes the numbers as `window.__astroBunnyWebGL` (`created`, `live`, `visit`). A healthy menu has `live: 1` and `visit: 1`, and Mute clicks or dial rotations add nothing. Browsers keep only a few contexts alive and drop the oldest one past that limit, which blanks the dial. Production builds do not include the counter.
+
+**Game messages without Unity.** While the game is open in `pnpm dev`, `window.__astroBunnyDev` simulates messages from Unity: `completeLevel(level)`, `setMutedFromGame(muted)` and `toggleFullscreenFromGame()` (call the last one from a click handler, because full screen needs a user gesture). See [docs/unity-shell-contract.md](docs/unity-shell-contract.md).
+
 ## HUD theme
 
 Tokens and classes for the level menu. Nothing on screen uses them yet. Existing screens keep Nunito and Baloo.

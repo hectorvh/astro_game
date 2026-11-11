@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef } from 'react'
 import { useAudioPrefs } from '@/lib/jerboa/audio-prefs'
+import { enterFullscreen, exitFullscreen, isFullscreen, subscribeFullscreen } from '@/lib/jerboa/fullscreen'
 import type { RunMode } from '@/lib/jerboa/levels'
 import { useSession } from '@/lib/jerboa/session-context'
 import { parseUnityMessage, type ShellToUnity, type UnityToShell } from '@/lib/jerboa/unity-messages'
@@ -13,7 +14,25 @@ type UnityGameScreenProps = {
   mode: RunMode
 }
 
-type AstroBunnyDev = { completeLevel: (level?: number) => void }
+type AstroBunnyDev = {
+  completeLevel: (level?: number) => void
+  setMutedFromGame: (muted: boolean) => void
+  /** Needs a user gesture like the real button: call it from a click handler. */
+  toggleFullscreenFromGame: () => void
+}
+
+let warnedFullscreenRejected = false
+
+/** Called synchronously from the message handler: the click inside the iframe gives the
+ *  parent page transient user activation, which a requestFullscreen needs. No await first. */
+function toggleShellFullscreen(): void {
+  const request = isFullscreen() ? exitFullscreen() : enterFullscreen()
+  void request.then((ok) => {
+    if (ok || warnedFullscreenRejected) return
+    warnedFullscreenRejected = true
+    console.warn('[fullscreen] The browser refused the full-screen request from the game.')
+  })
+}
 
 declare global {
   interface Window {
@@ -24,7 +43,7 @@ declare global {
 
 export function UnityGameScreen({ src, title, mode }: UnityGameScreenProps) {
   const { goTo, markLevelCompleted } = useSession()
-  const { muted } = useAudioPrefs()
+  const { muted, setMuted } = useAudioPrefs()
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const mutedRef = useRef(muted)
   const sentMutedRef = useRef(muted)
@@ -53,6 +72,17 @@ export function UnityGameScreen({ src, title, mode }: UnityGameScreenProps) {
         // A mute toggled while Unity was loading never reached it; resend the current state.
         sentMutedRef.current = mutedRef.current
         postToUnity({ type: 'setMuted', muted: mutedRef.current })
+        postToUnity({ type: 'fullscreenChanged', active: isFullscreen() })
+        return
+      }
+      if (message.type === 'mutedChanged') {
+        // Unity already has this value: mark it as sent so the muted effect does not echo it back.
+        sentMutedRef.current = message.muted
+        setMuted(message.muted)
+        return
+      }
+      if (message.type === 'toggleFullscreen') {
+        toggleShellFullscreen()
         return
       }
       if (finishedRef.current) return
@@ -95,10 +125,18 @@ export function UnityGameScreen({ src, title, mode }: UnityGameScreenProps) {
     return () => window.removeEventListener('message', onMessage)
   }, [])
 
+  // Every enter/exit (game button, Esc, Android back, system gestures) is reported to Unity.
+  useEffect(
+    () => subscribeFullscreen(() => postToUnity({ type: 'fullscreenChanged', active: isFullscreen() })),
+    [postToUnity],
+  )
+
   useEffect(() => {
     if (process.env.NODE_ENV !== 'development') return
     window.__astroBunnyDev = {
       completeLevel: (level = 1) => handleRef.current({ type: 'levelComplete', level }),
+      setMutedFromGame: (value) => handleRef.current({ type: 'mutedChanged', muted: value }),
+      toggleFullscreenFromGame: () => handleRef.current({ type: 'toggleFullscreen' }),
     }
     return () => {
       delete window.__astroBunnyDev
