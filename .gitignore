@@ -11,3 +11,6 @@ context.md
 .cursorignore
 # TypeScript incremental build info
 *.tsbuildinfo
+
+# Unity WebGL builds: Burst debug symbols must never ship
+**/*_BurstDebugInformation_DoNotShip/

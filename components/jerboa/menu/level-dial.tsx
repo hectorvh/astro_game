@@ -47,10 +47,10 @@ const _up = new Vector3()
 // Atmosphere shell radius: the visible top edge of the planet.
 const PLANET_TOP = 1.18
 // Label bottom limits: below the top edge, and below the top-right button
-// group (3 x 48 px + gaps, see .menu-links) when the label is under it.
+// group (up to 4 x 48 px + gaps, see .menu-links) when the label is under it.
 const LABEL_MIN_Y = 36
 const LABEL_MIN_Y_UNDER_BUTTONS = 92
-const BUTTONS_SPAN = 200
+const BUTTONS_SPAN = 240
 
 /** Pins the "COMING SOON" label just above the planet's on-screen silhouette,
  *  so it follows the camera fit in every orientation and never sits on the dial. */

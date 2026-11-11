@@ -3,6 +3,7 @@ import { Capacitor } from '@capacitor/core'
 interface WebkitFullscreenDocument {
   webkitFullscreenElement?: Element | null
   webkitFullscreenEnabled?: boolean
+  webkitExitFullscreen?: () => void | Promise<void>
 }
 
 interface WebkitFullscreenElement {
@@ -21,6 +22,45 @@ export function isFullscreen(): boolean {
 export function isFullscreenSupported(): boolean {
   const doc = document as Document & WebkitFullscreenDocument
   return !!(document.fullscreenEnabled || doc.webkitFullscreenEnabled)
+}
+
+/** True where a page button can switch full screen on and off (not iPhone Safari, not the native app). */
+export function canToggleFullscreen(): boolean {
+  if (typeof document === 'undefined') return false
+  try {
+    if (Capacitor.isNativePlatform()) return false
+  } catch {
+    // Not running under Capacitor.
+  }
+  return isFullscreenSupported()
+}
+
+/** Calls `listener` whenever the page enters or leaves full screen (including via Esc). */
+export function subscribeFullscreen(listener: () => void): () => void {
+  document.addEventListener('fullscreenchange', listener)
+  document.addEventListener('webkitfullscreenchange', listener)
+  return () => {
+    document.removeEventListener('fullscreenchange', listener)
+    document.removeEventListener('webkitfullscreenchange', listener)
+  }
+}
+
+export async function exitFullscreen(): Promise<boolean> {
+  try {
+    if (typeof document === 'undefined' || !isFullscreen()) return true
+    const doc = document as Document & WebkitFullscreenDocument
+    if (typeof document.exitFullscreen === 'function') {
+      await document.exitFullscreen()
+      return true
+    }
+    if (typeof doc.webkitExitFullscreen === 'function') {
+      await Promise.resolve(doc.webkitExitFullscreen())
+      return true
+    }
+    return false
+  } catch {
+    return false
+  }
 }
 
 export function isIOSPhoneBrowser(): boolean {

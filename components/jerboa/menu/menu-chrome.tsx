@@ -1,8 +1,15 @@
 'use client'
 
-import { Component, useEffect, useRef, type ReactNode, type RefObject } from 'react'
-import { Info, Settings, Volume2, VolumeX } from 'lucide-react'
+import { Component, useEffect, useRef, useSyncExternalStore, type ReactNode, type RefObject } from 'react'
+import { Info, Maximize, Minimize, Settings, Volume2, VolumeX } from 'lucide-react'
 import { BRAND } from '@/lib/jerboa/constants'
+import {
+  canToggleFullscreen,
+  enterFullscreen,
+  exitFullscreen,
+  isFullscreen,
+  subscribeFullscreen,
+} from '@/lib/jerboa/fullscreen'
 import { getLevelStatus, LEVELS, type LevelDef } from '@/lib/jerboa/levels'
 
 const LOGOS = [
@@ -45,6 +52,27 @@ export function SelectionTag({
         </span>
       </button>
     </div>
+  )
+}
+
+const noSubscribe = () => () => {}
+
+function FullscreenButton() {
+  const supported = useSyncExternalStore(noSubscribe, canToggleFullscreen, () => false)
+  const active = useSyncExternalStore(subscribeFullscreen, isFullscreen, () => false)
+  if (!supported) return null
+  const label = active ? 'Exit full screen' : 'Enter full screen'
+  return (
+    <button
+      type="button"
+      className="hud-icon-btn hud-focus"
+      data-tip={label}
+      aria-label={label}
+      // Synchronous call: the browser only allows full screen inside the tap itself.
+      onClick={() => void (active ? exitFullscreen() : enterFullscreen())}
+    >
+      {active ? <Minimize aria-hidden="true" /> : <Maximize aria-hidden="true" />}
+    </button>
   )
 }
 
@@ -92,6 +120,7 @@ export function MenuLinks({
       >
         {muted ? <VolumeX aria-hidden="true" /> : <Volume2 aria-hidden="true" />}
       </button>
+      <FullscreenButton />
     </div>
   )
 }
