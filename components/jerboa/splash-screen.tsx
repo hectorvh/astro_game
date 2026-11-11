@@ -7,8 +7,8 @@ const SPLASH_MS = 1500
 
 export const SPLASH_LOGO_SRCS = [
   '/images/brand/SCALA_logo.png',
-  '/images/brand/EU_co_logo.png',
-  '/images/brand/UKRI_logo.png',
+  '/images/brand/EU_co_logoV2.png',
+  '/images/brand/UKRI_logoV2.png',
 ] as const
 
 const LOGOS = {
@@ -17,11 +17,11 @@ const LOGOS = {
     alt: 'SCALA — Spatial Communication and Ageing across Languages',
   },
   eu: {
-    src: '/images/brand/EU_co_logo.png',
-    alt: 'Co-funded by the European Union',
+    src: '/images/brand/EU_co_logoV2.png',
+    alt: 'European Union',
   },
   ukri: {
-    src: '/images/brand/UKRI_logo.png',
+    src: '/images/brand/UKRI_logoV2.png',
     alt: 'UK Research and Innovation',
   },
 } as const

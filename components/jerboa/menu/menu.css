@@ -1,3 +1,13 @@
+.menu-coming-soon {
+  position: absolute;
+  left: 50%;
+  top: 38%;
+  z-index: 2;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
 .menu-links {
   position: absolute;
   z-index: 6;

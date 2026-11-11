@@ -302,18 +302,41 @@ export function MenuLive({ message }: { message: string }) {
 export function DialBoundary({
   children,
   fallback,
+  onReset,
 }: {
   children: ReactNode
   fallback: ReactNode
+  onReset?: () => void
 }) {
-  return <Boundary fallback={fallback}>{children}</Boundary>
+  return (
+    <Boundary fallback={fallback} onReset={onReset}>
+      {children}
+    </Boundary>
+  )
 }
 
-class Boundary extends Component<{ children: ReactNode; fallback: ReactNode }, { failed: boolean }> {
+class Boundary extends Component<
+  { children: ReactNode; fallback: ReactNode; onReset?: () => void },
+  { failed: boolean }
+> {
   state = { failed: false }
+  private resetTimer = 0
 
   static getDerivedStateFromError(): { failed: boolean } {
     return { failed: true }
+  }
+
+  componentDidCatch(error: Error) {
+    console.error('Level dial failed', error)
+    window.clearTimeout(this.resetTimer)
+    this.resetTimer = window.setTimeout(() => {
+      this.props.onReset?.()
+      this.setState({ failed: false })
+    }, 250)
+  }
+
+  componentWillUnmount() {
+    window.clearTimeout(this.resetTimer)
   }
 
   render() {

@@ -12,7 +12,6 @@ import {
   Matrix4,
   Mesh,
   MeshBasicMaterial,
-  MeshPhysicalMaterial,
   Object3D,
   PlaneGeometry,
   Shape,
@@ -46,6 +45,11 @@ export function mod(value: number, length: number): number {
   return ((value % length) + length) % length
 }
 
+export function levelUnlocked(index: number): boolean {
+  const level = LEVELS[mod(index, LEVEL_COUNT)]
+  return getLevelStatus(level.id).unlocked
+}
+
 export type MenuBridge = {
   overlay: boolean
   reduce: boolean
@@ -55,6 +59,7 @@ export type MenuBridge = {
   release: (dest: number, vel: number) => void
   setInput: (mode: 'touch' | 'kb' | 'pad') => void
   poke: () => void
+  onContextLost: () => void
 }
 
 function sectorShape(r0: number, r1: number, a0: number, a1: number): Shape {
@@ -121,7 +126,7 @@ export type DialSegment = {
   index: number
   locked: boolean
   body: Mesh
-  bodyMat: MeshPhysicalMaterial
+  bodyMat: MeshBasicMaterial
   edges: LineSegments
   edgeMat: LineBasicMaterial
   plate: Mesh
@@ -145,14 +150,14 @@ export function buildDial(): BuiltDial {
     bevelEnabled: true,
     bevelThickness: 0.03,
     bevelSize: 0.03,
-    bevelSegments: 2,
-    curveSegments: 40,
+    bevelSegments: 1,
+    curveSegments: 16,
   })
   segGeo.rotateX(-Math.PI / 2)
   const edgesGeo = new EdgesGeometry(segGeo, 30)
   const plateGeo = new ExtrudeGeometry(
     sectorShape(R_IN + 0.14, R_OUT - 0.14, a0 + SECTOR_GAP * 1.4, a1 - SECTOR_GAP * 1.4),
-    { depth: 0.025, bevelEnabled: false, curveSegments: 40 },
+    { depth: 0.025, bevelEnabled: false, curveSegments: 16 },
   )
   plateGeo.rotateX(-Math.PI / 2)
   const labelGeo = labelArc(0.9)
@@ -176,14 +181,11 @@ export function buildDial(): BuiltDial {
     const status = getLevelStatus(LEVELS[i].id)
     const pivot = new Group()
     pivot.rotation.y = i * SECTOR_STEP
-    const bodyMat = new MeshPhysicalMaterial({
+    const bodyMat = new MeshBasicMaterial({
       color: '#0a1c2c',
-      metalness: 0.1,
-      roughness: 0.5,
       transparent: true,
       opacity: status.unlocked ? 0.4 : 0.22,
-      emissive: '#00e5ff',
-      emissiveIntensity: 0.08,
+      toneMapped: false,
     })
     const body = new Mesh(segGeo, bodyMat)
     body.userData.index = i

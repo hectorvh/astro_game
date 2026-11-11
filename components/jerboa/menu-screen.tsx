@@ -6,7 +6,7 @@ import { useAudioPrefs } from '@/lib/jerboa/audio-prefs'
 import { enterFullscreen } from '@/lib/jerboa/fullscreen'
 import { getLevelStatus, LEVELS } from '@/lib/jerboa/levels'
 import { useSession } from '@/lib/jerboa/session-context'
-import { createDial, mod, type MenuBridge } from './menu/dial-geometry'
+import { createDial, levelUnlocked, mod, type MenuBridge } from './menu/dial-geometry'
 import { LevelDial } from './menu/level-dial'
 import {
   DialBoundary,
@@ -95,6 +95,7 @@ export function MenuScreen() {
   const infoOpenRef = useRef(false)
   const reduceRef = useRef(reduce)
 
+  const [canvasKey, setCanvasKey] = useState(0)
   const bridgeRef = useRef<MenuBridge>({
     overlay: false,
     reduce: false,
@@ -104,6 +105,7 @@ export function MenuScreen() {
     release: () => {},
     setInput: () => {},
     poke: () => {},
+    onContextLost: () => {},
   })
 
   const announce = (message: string) => {
@@ -146,6 +148,19 @@ export function MenuScreen() {
     commit(dest, next === indexRef.current ? 'none' : 'strong')
   }
 
+  const shake = () => {
+    if (reduceRef.current) return
+    setShaking(true)
+    window.setTimeout(() => setShaking(false), 420)
+  }
+
+  const refuse = (target: number) => {
+    const level = LEVELS[mod(target, LEVELS.length)]
+    playLatch(false)
+    shake()
+    announce(`Level ${level.code} is not available yet`)
+  }
+
   const goToLevel = (target: number) => {
     const current = mod(Math.round(dialRef.current.target), LEVELS.length)
     let delta = mod(target - current, LEVELS.length)
@@ -156,12 +171,6 @@ export function MenuScreen() {
 
   const step = (dir: number) => {
     commit(Math.round(dialRef.current.target) + dir, 'strong')
-  }
-
-  const shake = () => {
-    if (reduceRef.current) return
-    setShaking(true)
-    window.setTimeout(() => setShaking(false), 420)
   }
 
   const goToRef = useRef(goTo)
@@ -176,11 +185,8 @@ export function MenuScreen() {
   })
 
   const launch = () => {
-    const level = LEVELS[indexRef.current]
-    if (!getLevelStatus(level.id).unlocked) {
-      playLatch(false)
-      shake()
-      announce(`Level ${level.code} is not available yet`)
+    if (!levelUnlocked(indexRef.current)) {
+      refuse(indexRef.current)
       return
     }
     enterFullscreen()
@@ -189,15 +195,8 @@ export function MenuScreen() {
   }
 
   const choose = (target: number) => {
-    const level = LEVELS[target]
-    const unlocked = getLevelStatus(level.id).unlocked
     goToLevel(target)
-    if (!unlocked) {
-      playLatch(false)
-      shake()
-      announce(`Level ${level.code} is not available yet`)
-      return
-    }
+    if (!levelUnlocked(target)) return
     enterFullscreen()
     unlockAudio()
     goToRef.current('minigame1')
@@ -216,6 +215,7 @@ export function MenuScreen() {
     bridge.preview = preview
     bridge.release = release
     bridge.setInput = (next) => setInputMode(next)
+    bridge.onContextLost = () => setCanvasKey((key) => key + 1)
     handlers.current = { step, launch, goToLevel }
   })
 
@@ -276,9 +276,9 @@ export function MenuScreen() {
       idle = window.setTimeout(() => {
         acc = 0
       }, 320)
-      if (Math.abs(acc) >= 60) {
+      if (Math.abs(acc) >= 100) {
         const dir = Math.sign(acc)
-        acc -= dir * 60
+        acc -= dir * 100
         handlers.current.step(dir)
       }
     }
@@ -314,27 +314,43 @@ export function MenuScreen() {
 
   const level = LEVELS[index]
   const showDial = webgl
-  const frameloop = infoOpen ? 'never' : reduce ? 'demand' : 'always'
+  const frameloop = reduce ? 'demand' : 'always'
+  const locked = !getLevelStatus(level.id).unlocked
 
   return (
     <main className="hud-stage relative min-h-dvh w-full" aria-label="Level menu">
       <h1 className="sr-only">Choose a level</h1>
       <MenuLive message={live} />
-      <div ref={shellRef} className="absolute inset-0" inert={infoOpen ? true : undefined}>
+      <div ref={shellRef} className="absolute inset-0 z-[1]" inert={infoOpen ? true : undefined}>
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: "url('/images/Gemini_Generated_Image_gjhy10gjhy10gjhy.jpeg')" }}
+        />
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[#0A0E14]/40" />
         <StarField />
         {showDial ? (
-          <DialBoundary fallback={<LevelCards onChoose={choose} />}>
+          <DialBoundary
+            fallback={<LevelCards onChoose={choose} />}
+            onReset={() => setCanvasKey((key) => key + 1)}
+          >
             <LevelDial
               dialRef={dialRef}
               bridgeRef={bridgeRef}
               level={level}
               reduce={reduce}
               frameloop={frameloop}
+              canvasKey={canvasKey}
             />
           </DialBoundary>
         ) : (
           <LevelCards onChoose={choose} />
         )}
+        {locked ? (
+          <div className="menu-coming-soon" aria-hidden="true">
+            <span className="hud-tag">COMING SOON</span>
+          </div>
+        ) : null}
         <ScreenReaderLevels onChoose={choose} />
         <SelectionTag level={level} shaking={shaking} onLaunch={launch} />
         <MenuLinks

@@ -4,12 +4,10 @@
 // rule treats them as frozen values, which does not match how a scene graph works.
 /* eslint-disable react-hooks/immutability */
 
-import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, type RefObject } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type RefObject } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { Html, useGLTF } from '@react-three/drei'
 import {
   AdditiveBlending,
-  Box3,
   CanvasTexture,
   Color,
   DoubleSide,
@@ -21,8 +19,6 @@ import {
   RingGeometry,
   SRGBColorSpace,
   Vector2,
-  Vector3,
-  type Material,
 } from 'three'
 import { getLevelStatus, LEVELS, type LevelDef } from '@/lib/jerboa/levels'
 import {
@@ -39,28 +35,20 @@ import {
   type MenuBridge,
 } from './dial-geometry'
 
-const MENU_MODEL = '/3d/AstroBunny.menu.glb'
-useGLTF.preload(MENU_MODEL, false, true)
-
 const _ndc = new Vector2()
-const _size = new Vector3()
-const _center = new Vector3()
 const _amber = new Color('#FF9100')
 const _cyan = new Color('#9fe9ff')
 const _plateIdle = new Color('#123044')
 const _raycaster = new Raycaster()
 
-function applyOpacity(root: Group, opacity: number) {
-  root.traverse((obj) => {
-    const mesh = obj as Mesh
-    if (!mesh.isMesh) return
-    const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
-    for (const mat of mats) {
-      mat.transparent = opacity < 0.999
-      mat.opacity = opacity
-    }
-  })
+const CANVAS_GL = { alpha: true, antialias: true, powerPreference: 'high-performance' as const }
+const CANVAS_CAMERA = {
+  fov: 35,
+  position: [0, 4.2, 12] as [number, number, number],
+  near: 0.1,
+  far: 80,
 }
+const CANVAS_DPR: [number, number] = [1, 1.5]
 
 function FitCamera() {
   const { camera, size, invalidate } = useThree()
@@ -100,8 +88,7 @@ function DialRig({
   dialRef: RefObject<DialState>
   bridgeRef: RefObject<MenuBridge>
 }) {
-  const built = useMemo(() => buildDial(), [])
-  const groupRef = useRef<Group>(null)
+  const [built] = useState(() => buildDial())
   const coreRef = useRef<Mesh>(null)
   const { camera, gl, size, invalidate } = useThree()
 
@@ -124,23 +111,26 @@ function DialRig({
       if (cancelled) return
       const max = gl.capabilities.getMaxAnisotropy()
       built.segments.forEach((segment, index) => {
+        if (!segment.labelMat || !segment.label) return
         const texture = labelTexture(levelLabel(index))
         texture.anisotropy = max
+        segment.labelMat.map?.dispose()
         segment.labelMat.map = texture
         segment.labelMat.opacity = 1
         segment.label.visible = true
         segment.labelMat.needsUpdate = true
       })
+      invalidate()
     })
     return () => {
       cancelled = true
     }
-  }, [built, gl])
+  }, [built, gl, invalidate])
 
   useFrame((_, delta) => {
     const dial = dialRef.current
     const bridge = bridgeRef.current
-    if (!dial || !bridge) return
+    if (!dial || !bridge || !built.group) return
     const dt = Math.min(0.05, delta)
     if (!dial.dragging) {
       if (bridge.reduce) {
@@ -163,7 +153,11 @@ function DialRig({
       Math.abs(dial.vel) > 0.001
     if (moving) bridge.poke()
     for (const segment of built.segments) {
+      if (!segment?.label || !segment.edgeMat || !segment.plateMat || !segment.bodyMat || !segment.labelMat) {
+        continue
+      }
       const on = segment.index === active
+      segment.label.scale.x = Math.cos((segment.index - dial.pos) * SECTOR_STEP) < -0.2 ? -1 : 1
       segment.edgeMat.color.copy(on ? _amber : _cyan)
       segment.edgeMat.opacity = on ? 0.95 : segment.locked ? 0.18 : 0.38
       segment.plateMat.color.copy(on ? _amber : _plateIdle)
@@ -188,6 +182,7 @@ function DialRig({
 
     const hitWith = (event: PointerEvent) => {
       const rect = canvas.getBoundingClientRect()
+      if (rect.width < 1 || rect.height < 1) return { seg: -1, core: false }
       _ndc.set(
         ((event.clientX - rect.left) / rect.width) * 2 - 1,
         -((event.clientY - rect.top) / rect.height) * 2 + 1,
@@ -238,7 +233,7 @@ function DialRig({
       const dx = event.clientX - drag.x
       const dt = Math.max(0.016, (now - drag.t) / 1000)
       drag.moved += Math.abs(dx)
-      const sectorPx = Math.max(80, size.width * 0.25)
+      const sectorPx = Math.max(170, Math.min(400, size.width * 0.42))
       const dPos = -dx / sectorPx
       dial.pos += dPos
       drag.vel = dPos / dt
@@ -261,6 +256,11 @@ function DialRig({
       const vel = drag.vel
       dial.dragging = false
       drag = null
+      try {
+        canvas.releasePointerCapture(event.pointerId)
+      } catch {
+        // Already released.
+      }
       if (tap) {
         dial.pos = dial.target
         dial.vel = 0
@@ -269,25 +269,35 @@ function DialRig({
         else if (seg === current || seg === -2) bridge.launch()
         return
       }
-      const flick = Math.max(-2, Math.min(2, vel * 0.18))
+      const flick = Math.max(-1, Math.min(1, vel * 0.1))
       bridge.release(Math.round(dial.pos + flick), vel)
+    }
+
+    const onLost = (event: Event) => {
+      event.preventDefault()
+      const dialState = dialRef.current
+      if (dialState) dialState.dragging = false
+      drag = null
+      bridgeRef.current.onContextLost()
     }
 
     canvas.addEventListener('pointerdown', onDown)
     canvas.addEventListener('pointermove', onMove)
     canvas.addEventListener('pointerup', onUp)
     canvas.addEventListener('pointercancel', onUp)
+    canvas.addEventListener('webglcontextlost', onLost, false)
     return () => {
       canvas.removeEventListener('pointerdown', onDown)
       canvas.removeEventListener('pointermove', onMove)
       canvas.removeEventListener('pointerup', onUp)
       canvas.removeEventListener('pointercancel', onUp)
+      canvas.removeEventListener('webglcontextlost', onLost, false)
     }
   }, [built, bridgeRef, camera, dialRef, gl, size.width])
 
   return (
     <>
-      <primitive ref={groupRef} object={built.group} />
+      <primitive object={built.group} />
       <mesh ref={coreRef} position={[0, CORE_Y, 0]}>
         <sphereGeometry args={[1.45, 16, 16]} />
         <meshBasicMaterial transparent opacity={0} depthWrite={false} />
@@ -298,14 +308,14 @@ function DialRig({
 
 function bandTexture(surface: string, bands: string): CanvasTexture {
   const canvas = document.createElement('canvas')
-  canvas.width = 512
-  canvas.height = 256
+  canvas.width = 256
+  canvas.height = 128
   const ctx = canvas.getContext('2d')
   if (ctx) {
     ctx.fillStyle = surface
-    ctx.fillRect(0, 0, 512, 256)
+    ctx.fillRect(0, 0, 256, 128)
     ctx.fillStyle = bands
-    for (let i = 0; i < 9; i++) ctx.fillRect(0, 8 + i * 28, 512, i % 2 === 0 ? 8 : 4)
+    for (let i = 0; i < 9; i++) ctx.fillRect(0, 4 + i * 14, 256, i % 2 === 0 ? 4 : 2)
   }
   const texture = new CanvasTexture(canvas)
   texture.colorSpace = SRGBColorSpace
@@ -313,7 +323,10 @@ function bandTexture(surface: string, bands: string): CanvasTexture {
 }
 
 function Planet({ level, dim, fadeRef }: { level: LevelDef; dim: boolean; fadeRef: RefObject<number> }) {
-  const map = useMemo(() => bandTexture(level.planet.surface, level.planet.bands), [level])
+  const map = useMemo(
+    () => bandTexture(level.planet.surface, level.planet.bands),
+    [level.planet.surface, level.planet.bands],
+  )
   const surface = useRef<MeshBasicMaterial>(null)
   const air = useRef<MeshBasicMaterial>(null)
   const ring = useRef<MeshBasicMaterial>(null)
@@ -321,24 +334,27 @@ function Planet({ level, dim, fadeRef }: { level: LevelDef; dim: boolean; fadeRe
   useFrame(() => {
     const fade = fadeRef.current ?? 1
     const bright = dim ? 0.45 : 1
-    if (surface.current) surface.current.opacity = fade
-    if (air.current) air.current.opacity = 0.25 * bright * fade
-    if (ring.current) ring.current.opacity = 0.5 * bright * fade
+    if (surface.current) {
+      surface.current.opacity = fade
+      surface.current.color.set(dim ? '#737373' : '#ffffff')
+    }
+    if (air.current) {
+      air.current.opacity = 0.25 * bright * fade
+      air.current.color.set(level.planet.atmosphere)
+    }
+    if (ring.current) {
+      ring.current.opacity = 0.5 * bright * fade
+      ring.current.color.set(level.planet.bands)
+    }
   })
   return (
     <group>
       <mesh>
-        <sphereGeometry args={[1.1, 48, 32]} />
-        <meshBasicMaterial
-          ref={surface}
-          map={map}
-          color={dim ? '#737373' : '#ffffff'}
-          transparent
-          toneMapped={false}
-        />
+        <sphereGeometry args={[1.1, 32, 20]} />
+        <meshBasicMaterial ref={surface} map={map} transparent toneMapped={false} />
       </mesh>
       <mesh>
-        <sphereGeometry args={[1.18, 40, 24]} />
+        <sphereGeometry args={[1.18, 24, 16]} />
         <meshBasicMaterial
           ref={air}
           color={level.planet.atmosphere}
@@ -352,7 +368,7 @@ function Planet({ level, dim, fadeRef }: { level: LevelDef; dim: boolean; fadeRe
       </mesh>
       {level.planet.ring ? (
         <mesh rotation={[-Math.PI / 2, 0, 0]}>
-          <ringGeometry args={[1.5, 2.1, 64]} />
+          <ringGeometry args={[1.5, 2.1, 40]} />
           <meshBasicMaterial
             ref={ring}
             color={level.planet.bands}
@@ -364,117 +380,21 @@ function Planet({ level, dim, fadeRef }: { level: LevelDef; dim: boolean; fadeRe
           />
         </mesh>
       ) : null}
-      {dim ? (
-        <Html center position={[0, 1.65, 0]} zIndexRange={[4, 0]} style={{ pointerEvents: 'none' }}>
-          <span className="hud-tag" style={{ color: 'var(--hud-ink)', whiteSpace: 'nowrap' }}>
-            COMING SOON
-          </span>
-        </Html>
-      ) : null}
     </group>
   )
 }
 
-function cloneModel(source: Group): Group {
-  const cloned = source.clone(true)
-  cloned.traverse((obj) => {
-    const mesh = obj as Mesh
-    if (!mesh.isMesh) return
-    mesh.material = Array.isArray(mesh.material)
-      ? mesh.material.map((mat) => mat.clone())
-      : mesh.material.clone()
-  })
-  return cloned
-}
-
-function LevelModel({
-  fadeRef,
-  spin,
-}: {
-  fadeRef: RefObject<number>
-  spin: boolean
-}) {
-  const { scene } = useGLTF(MENU_MODEL, false, true)
-  const cloned = useMemo(() => cloneModel(scene), [scene])
-  const spinRef = useRef<Group>(null)
-  const fitRef = useRef<Group>(null)
-
-  useLayoutEffect(() => {
-    const fit = fitRef.current
-    if (!fit) return
-    const holder = new Group()
-    holder.add(cloned)
-    holder.updateWorldMatrix(true, true)
-    const box = new Box3().setFromObject(holder)
-    const s = 2 / (box.getSize(_size).y || 1)
-    const center = box.getCenter(_center)
-    fit.scale.setScalar(s)
-    fit.position.set(-center.x * s, -center.y * s, -center.z * s)
-    fit.add(cloned)
-    return () => {
-      fit.remove(cloned)
-    }
-  }, [cloned])
-
-  useEffect(
-    () => () => {
-      cloned.traverse((obj) => {
-        const mesh = obj as Mesh
-        if (!mesh.isMesh) return
-        const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
-        mats.forEach((mat: Material) => mat.dispose())
-      })
-    },
-    [cloned],
-  )
-
-  useFrame((_, dt) => {
-    const root = spinRef.current
-    if (!root) return
-    if (spin) root.rotation.y += 0.25 * dt
-    applyOpacity(root, fadeRef.current ?? 1)
-  })
-
-  return (
-    <group ref={spinRef}>
-      <group ref={fitRef} />
-    </group>
-  )
-}
-
-function CoreFallback({ reduce }: { reduce: boolean }) {
-  const ref = useRef<Mesh>(null)
-  useFrame(({ clock }) => {
-    const mesh = ref.current
-    if (!mesh || reduce) return
-    const scale = 1 + Math.sin(clock.elapsedTime * 3) * 0.06
-    mesh.scale.setScalar(scale)
-  })
-  return (
-    <mesh ref={ref}>
-      <icosahedronGeometry args={[0.9, 1]} />
-      <meshBasicMaterial color="#00E5FF" wireframe toneMapped={false} />
-    </mesh>
-  )
-}
-
-function Core({
-  level,
-  reduce,
-}: {
-  level: LevelDef
-  reduce: boolean
-}) {
-  const fadeRef = useRef(reduce ? 1 : 0)
+function Core({ level, reduce }: { level: LevelDef; reduce: boolean }) {
+  const fadeRef = useRef(1)
   const born = useRef(0)
   const wrap = useRef<Group>(null)
   const status = getLevelStatus(level.id)
-  const showModel = !!level.model && status.unlocked
+  const levelId = level.id
   useLayoutEffect(() => {
     born.current = performance.now()
     fadeRef.current = reduce ? 1 : 0
     wrap.current?.scale.setScalar(reduce ? 1 : 0.86)
-  }, [level.id, reduce])
+  }, [levelId, reduce])
   useFrame(() => {
     const t = reduce ? 1 : Math.min(1, (performance.now() - born.current) / 300)
     fadeRef.current = t
@@ -482,20 +402,14 @@ function Core({
   })
   return (
     <group ref={wrap} position={[0, CORE_Y, 0]}>
-      <Suspense fallback={<CoreFallback reduce={reduce} />}>
-        {showModel ? (
-          <LevelModel fadeRef={fadeRef} spin={!reduce} />
-        ) : (
-          <Planet level={level} dim={!status.unlocked} fadeRef={fadeRef} />
-        )}
-      </Suspense>
+      <Planet level={level} dim={!status.unlocked} fadeRef={fadeRef} />
     </group>
   )
 }
 
 function Reticles() {
   const geos = useMemo(
-    () => [new RingGeometry(1.25, 1.32, 80), new RingGeometry(2.05, 2.12, 96)],
+    () => [new RingGeometry(1.25, 1.32, 48), new RingGeometry(2.05, 2.12, 64)],
     [],
   )
   useEffect(() => () => geos.forEach((geo) => geo.dispose()), [geos])
@@ -533,11 +447,9 @@ function Scene({
     <>
       <FitCamera />
       <ambientLight intensity={0.55} />
-      <pointLight position={[2.2, 3.1, 3.4]} color="#d8fbff" intensity={46} distance={18} decay={2} />
-      <pointLight position={[-3.1, 1.6, -2.4]} color="#ff9100" intensity={28} distance={16} decay={2} />
       <Reticles />
       <DialRig dialRef={dialRef} bridgeRef={bridgeRef} />
-      <Core key={level.id} level={level} reduce={reduce} />
+      <Core level={level} reduce={reduce} />
     </>
   )
 }
@@ -548,21 +460,24 @@ export function LevelDial({
   level,
   reduce,
   frameloop,
+  canvasKey,
 }: {
   dialRef: RefObject<DialState>
   bridgeRef: RefObject<MenuBridge>
   level: LevelDef
   reduce: boolean
-  frameloop: 'always' | 'demand' | 'never'
+  frameloop: 'always' | 'demand'
+  canvasKey: number
 }) {
   return (
     <Canvas
+      key={canvasKey}
       className="absolute inset-0 touch-none"
       style={{ touchAction: 'none' }}
-      dpr={[1, 2]}
+      dpr={CANVAS_DPR}
       frameloop={frameloop}
-      gl={{ alpha: true, antialias: true }}
-      camera={{ fov: 35, position: [0, 4.2, 12], near: 0.1, far: 80 }}
+      gl={CANVAS_GL}
+      camera={CANVAS_CAMERA}
       onCreated={({ gl }) => {
         gl.setClearColor(0x000000, 0)
       }}
