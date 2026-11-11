@@ -23,19 +23,14 @@ export function DecorGlyphs({ className = '' }: { className?: string }) {
   )
 }
 
-/** Full-page layered space backdrop for the onboarding-style panels. */
+/** Full-page space backdrop for the menu and onboarding panels. */
 export function PanelStage({ children }: { children: ReactNode }) {
   return (
-    <main className="relative flex min-h-dvh w-full flex-col items-center justify-center overflow-hidden bg-background px-4 py-8 sm:py-12">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-cover bg-bottom bg-no-repeat opacity-40"
-        style={{ backgroundImage: "url('/images/Gemini_Generated_Image_gjhy10gjhy10gjhy.jpeg')" }}
-      />
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 bg-gradient-to-b from-background via-background/70 to-background/30"
-      />
+    <main
+      className="relative flex min-h-dvh w-full flex-col items-center justify-center overflow-hidden bg-[#0A0E14] bg-cover bg-center px-4 py-8 sm:py-12"
+      style={{ backgroundImage: "url('/images/Gemini_Generated_Image_gjhy10gjhy10gjhy.jpeg')" }}
+    >
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-background/45" />
       <DecorGlyphs />
       <div className="relative z-10 w-full">{children}</div>
     </main>

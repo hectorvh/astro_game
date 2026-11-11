@@ -20,12 +20,9 @@ export function WelcomeScreen() {
       <p className="mb-2 text-sm font-bold tracking-widest text-primary uppercase">
         Welcome
       </p>
-      <h1 className="mb-2 font-display text-4xl font-bold text-purple text-balance sm:text-5xl">
-        {"Astro Bunny"}
+      <h1 className="mb-8 font-display text-4xl font-bold text-purple text-balance sm:text-5xl">
+        Astro Bunny Game
       </h1>
-      <p className="mb-8 text-base font-semibold text-muted-foreground">
-        Galaxy Drift
-      </p>
 
       {error ? (
         <p
@@ -55,7 +52,7 @@ export function WelcomeScreen() {
           className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-primary px-6 text-xl font-bold text-primary-foreground shadow-storybook transition-transform hover:bg-teal-dark active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
         >
           <UserPlus className="size-6" />
-          Sign In
+          Sign Up
         </button>
         <button
           type="button"

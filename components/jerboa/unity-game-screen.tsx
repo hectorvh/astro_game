@@ -30,7 +30,7 @@ export function UnityGameScreen({ src, title }: UnityGameScreenProps) {
     function onMessage(event: MessageEvent) {
       if (event.source !== iframeRef.current?.contentWindow) return
       if (event.data?.type !== EXIT_MESSAGE) return
-      goTo('title')
+      goTo('menu')
     }
 
     window.addEventListener('message', onMessage)

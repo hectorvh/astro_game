@@ -2,7 +2,8 @@
 
 import { SessionProvider, useSession } from '@/lib/jerboa/session-context'
 import { PanelStage } from './scene'
-import { IntroScreen } from './intro-screen'
+import { StartScreen } from './start-screen'
+import { SplashScreen } from './splash-screen'
 import { WelcomeScreen } from './welcome-screen'
 import { SignInScreen } from './signin-screen'
 import { LogInScreen } from './login-screen'
@@ -18,8 +19,12 @@ function CurrentScreen() {
   const { step, participant, credentials } = useSession()
 
   switch (step) {
-    case 'intro':
-      return <IntroScreen />
+    case 'start':
+      return <StartScreen />
+    case 'splash-scala':
+      return <SplashScreen key="scala" variant="scala" />
+    case 'splash-funders':
+      return <SplashScreen key="funders" variant="funders" />
     case 'welcome':
       return (
         <PanelStage>
@@ -68,8 +73,7 @@ function CurrentScreen() {
           <DeclinedScreen />
         </PanelStage>
       )
-    case 'title':
-    case 'map':
+    case 'menu':
       return <TitleScreen />
     case 'minigame1':
       return <MinigameOneScreen />

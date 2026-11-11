@@ -34,14 +34,20 @@ const baloo = localFont({
 })
 
 export const metadata: Metadata = {
-  title: 'Astro Bunny: Galaxy Drift',
+  title: 'Astro Bunny Game',
+  applicationName: 'Astro Bunny Game',
   description:
     'A gamified spatial-language research instrument. Help Astro Bunny find the way home while taking part in the SCALA study.',
+  appleWebApp: {
+    capable: true,
+    title: 'Astro Bunny Game',
+    statusBarStyle: 'black-translucent',
+  },
 }
 
 export const viewport: Viewport = {
   colorScheme: 'dark',
-  themeColor: '#0c1220',
+  themeColor: '#0A0E14',
 }
 
 export default function RootLayout({

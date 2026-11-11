@@ -28,15 +28,15 @@ export function IntroScreen() {
     video.volume = 1
     video.defaultMuted = false
 
-    async function start() {
+    async function start(player: HTMLVideoElement) {
       try {
-        await video.play()
+        await player.play()
       } catch {
         if (!cancelled) setNeedsTap(true)
       }
     }
 
-    void start()
+    void start(video)
     return () => {
       cancelled = true
     }

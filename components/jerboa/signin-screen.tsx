@@ -29,7 +29,7 @@ export function SignInScreen() {
     <Panel className="max-w-lg">
       <div className="mb-6 text-center">
         <p className="mb-1 text-sm font-bold tracking-widest text-primary uppercase">
-          Sign In
+          Sign Up
         </p>
         <h1 className="font-display text-3xl font-bold text-purple text-balance sm:text-4xl">
           Create your user ID

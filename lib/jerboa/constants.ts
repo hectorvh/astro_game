@@ -3,7 +3,7 @@ import type { Fluency } from './types'
 export const BRAND = {
   title: 'Astro Bunny',
   subtitle: 'Galaxy Drift',
-  fullTitle: 'Astro Bunny: Galaxy Drift',
+  fullTitle: 'Astro Bunny Game',
   characterName: 'Astro Bunny',
   characterImage: '/images/Gemini_Generated_Image_3ys78n3ys78n3ys7-removebg.png',
   minigameName: 'Galaxy Drift',

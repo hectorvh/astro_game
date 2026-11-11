@@ -17,7 +17,9 @@ import { ensureAnonymousSession, startFreshAnonymousSession } from './auth'
 import { createAccount, logIn, saveParticipant, signUp } from './data-access'
 
 export type Step =
-  | 'intro'
+  | 'start'
+  | 'splash-scala'
+  | 'splash-funders'
   | 'welcome'
   | 'signin'
   | 'login'
@@ -25,8 +27,7 @@ export type Step =
   | 'settings'
   | 'information'
   | 'consent'
-  | 'title'
-  | 'map'
+  | 'menu'
   | 'minigame1'
   | 'jerboa3d'
   | 'bunny3d'
@@ -34,13 +35,15 @@ export type Step =
   | 'declined'
 
 export const STEP_ORDER: Step[] = [
+  'start',
+  'splash-scala',
+  'splash-funders',
   'welcome',
   'signin',
   'userdatasetup',
   'information',
   'consent',
-  'title',
-  'map',
+  'menu',
 ]
 
 export type AuthStatus = 'pending' | 'ready' | 'error'
@@ -88,7 +91,7 @@ function profileDraft(p: ParticipantRecord): Partial<OnboardingValues> {
 const SessionContext = createContext<SessionContextValue | null>(null)
 
 export function SessionProvider({ children }: { children: ReactNode }) {
-  const [step, setStep] = useState<Step>('intro')
+  const [step, setStep] = useState<Step>('start')
   const [participant, setParticipant] = useState<ParticipantRecord | null>(null)
   const [draft, setDraft] = useState<Partial<OnboardingValues> | null>(null)
   const [credentials, setCredentials] = useState<Credentials | null>(null)
@@ -161,7 +164,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     setCredentials(null)
     setConsentGiven(false)
     setIsGuest(true)
-    goTo('title')
+    goTo('menu')
   }, [goTo])
 
   const submitSignUp = useCallback(
@@ -190,7 +193,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         setConsentGiven(session.consentGiven)
         setIsGuest(false)
         if (session.participant) setDraft(profileDraft(session.participant))
-        goTo('title')
+        goTo('menu')
       } catch (cause) {
         setError(messageFor(cause))
       }
@@ -218,7 +221,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         const saved = await saveParticipant(values, participant.id)
         setParticipant(saved)
         setDraft(profileDraft(saved))
-        goTo('title')
+        goTo('menu')
       } catch (cause) {
         setError(messageFor(cause))
       }
@@ -257,7 +260,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         setConsentGiven(true)
         setIsGuest(false)
         if (session.participant) setDraft(profileDraft(session.participant))
-        goTo('title')
+        goTo('menu')
       } catch (cause) {
         setError(messageFor(cause))
       }

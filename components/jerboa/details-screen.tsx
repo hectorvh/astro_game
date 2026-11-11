@@ -85,12 +85,12 @@ export function DetailsScreen({ mode }: { mode: 'signup' | 'settings' }) {
           Playing as a guest
         </h1>
         <p className="mb-6 text-lg leading-relaxed text-muted-foreground text-pretty">
-          Guest mode does not save any details. Sign in from the welcome screen if you want to take
+          Guest mode does not save any details. Sign up from the welcome screen if you want to take
           part in the study.
         </p>
         <button
           type="button"
-          onClick={() => goTo('title')}
+          onClick={() => goTo('menu')}
           className="mx-auto flex h-14 items-center justify-center gap-2 rounded-2xl border-2 border-input bg-background px-6 text-lg font-bold text-foreground transition-colors hover:bg-muted"
         >
           <ArrowLeft className="size-5" />
@@ -244,7 +244,7 @@ export function DetailsScreen({ mode }: { mode: 'signup' | 'settings' }) {
         <div className="mt-2 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
           <button
             type="button"
-            onClick={() => goTo(mode === 'settings' ? 'title' : 'signin')}
+            onClick={() => goTo(mode === 'settings' ? 'menu' : 'signin')}
             className="flex h-14 items-center justify-center gap-2 rounded-2xl border-2 border-input bg-background px-6 text-lg font-bold text-foreground transition-colors hover:bg-muted"
           >
             <ArrowLeft className="size-5" />

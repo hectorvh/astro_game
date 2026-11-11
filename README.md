@@ -2,7 +2,7 @@
 
 A research instrument from the SCALA project (Spatial Communication and Ageing across Languages) at ifgi, University of Münster. It is dressed as a space flight: participants help **Astro Bunny**, a supply-run astronaut whose craft drifted through a black hole, hop from world to world while the app can record demographics, consent, and mini-game trials.
 
-The vertical slice that is built today is **onboarding → consent → title → map → Galaxy Drift** (Unity WebGL). Other map stops are still placeholders.
+The vertical slice that is built today is **Play → logo screens → Welcome → onboarding or guest → menu → Galaxy Drift** (Unity WebGL).
 
 ## Architecture
 
@@ -15,8 +15,8 @@ Browser
               ├── SessionProvider  (lib/jerboa/session-context.tsx)
               │     step, participant, login / signup / guest / save / consent
               └── CurrentScreen
-                    intro | welcome | signin | login | userdatasetup | settings |
-                    information | consent | declined | title | map | minigame1
+                    start | splash-scala | splash-funders | welcome | signin | login |
+                    userdatasetup | settings | information | consent | declined | menu | minigame1
 
 Writes
   └── lib/jerboa/data-access.ts     ← stable interface
@@ -39,7 +39,7 @@ Galaxy Drift is a Unity WebGL build under `game-buildV9-02/`. The Next app embed
 | Database | `db/local.sql` | Users, languages, trials. Existing databases: `pnpm db:merge`. |
 | Mini-game | `game-buildV9-02/` + `public/game-build/play.html` | Unity WebGL (Galaxy Drift / Astro Bunny Runner). |
 
-**Postgres mode (local default):** Next.js route handlers use `pg` and Unix-socket peer auth. Identity is one httpOnly cookie (`jerboa_participant` = `users.id`). Passwords are stored as `scrypt` hashes, never in plaintext. A user row is written only when **Create account** succeeds at the end of sign-in.
+**Postgres mode (local default):** Next.js route handlers use `pg` and Unix-socket peer auth. Identity is one httpOnly cookie (`jerboa_participant` = `users.id`). Passwords are stored as `scrypt` hashes, never in plaintext. A user row is written only when **Create account** succeeds at the end of sign-up.
 
 **Supabase mode:** the browser talks to a hosted project with the publishable key. Row-level security is required. The migration in `supabase/migrations/` is a **different** schema (`auth.uid()`); do not apply it to the local `jerboa` database.
 
@@ -53,41 +53,44 @@ Galaxy Drift is a Unity WebGL build under `game-buildV9-02/`. The Next app embed
 
 ## Screens
 
-`JourneyApp` reads `step` and renders one component. The first seven screens sit in a card (`PanelStage`). Title, Map, and Galaxy Drift are full-bleed scenes.
+`JourneyApp` reads `step` and renders one component. Welcome through consent sit in a card (`PanelStage`). Play, the logo screens, the menu, and Galaxy Drift are full-bleed.
 
 | Step | Screen | File | What it does |
 | --- | --- | --- | --- |
-| `intro` | Opening video | `intro-screen.tsx` | Plays on first load, then Welcome. |
-| `welcome` | Welcome | `welcome-screen.tsx` | Log In, Sign In, **Access as Guest**, UI language. |
+| `start` | Play | `start-screen.tsx` | One Play button. Requests full screen, unlocks audio, then the logo screens. |
+| `splash-scala` | SCALA | `splash-screen.tsx` | SCALA logo for 1.5 seconds. |
+| `splash-funders` | Project partners | `splash-screen.tsx` | EU and UKRI logos for 1.5 seconds, then Welcome. |
+| `welcome` | Welcome | `welcome-screen.tsx` | Log In, Sign Up, **Access as Guest**, UI language. |
 | `signin` | Create your user ID | `signin-screen.tsx` | Checks that the userid is free; does not create a row yet. |
-| `login` | Welcome back | `login-screen.tsx` | Existing account. **Log In** goes to the home screen. |
-| `userdatasetup` | Tell us a bit about yourself | `details-screen.tsx` (`mode="signup"`) | Sign In demographics. Empty form, kept in memory until Create account. |
+| `login` | Welcome back | `login-screen.tsx` | Existing account. **Log In** goes to the menu. |
+| `userdatasetup` | Tell us a bit about yourself | `details-screen.tsx` (`mode="signup"`) | Sign Up demographics. Empty form, kept in memory until Create account. |
 | `settings` | Tell us a bit about yourself | `details-screen.tsx` (`mode="settings"`) | Edit the logged-in profile. Guest mode does not save. |
 | `information` | Participant Information | `information-screen.tsx` | Study explanation (placeholder copy). |
 | `consent` | Ethical Information & Consent | `consent-screen.tsx` | Tick-box gate, then **Create account** (writes the `users` row, including consent). Decline writes nothing. |
 | `declined` | Thank you for your time | `declined-screen.tsx` | Terminal state after Decline. |
-| `title` | Home menu | `title-screen.tsx` | Start Playing, Settings, About, Exit. |
-| `map` | Flight path home | `map-screen.tsx` | Five stops. Stop 1 opens Galaxy Drift. |
+| `menu` | Home menu | `title-screen.tsx` | Play, Settings, About, Exit. Still the previous home screen. |
 | `minigame1` | Galaxy Drift | `minigame-one-screen.tsx` | Unity WebGL embed. Arrow keys / A·D to change lane; Space to fire. |
 
-The step name `userdatasetup` and the file `details-screen.tsx` differ on purpose: the file still uses the older `DetailsScreen` export.
+The step name `userdatasetup` and the file `details-screen.tsx` differ on purpose: the file still uses the older `DetailsScreen` export. The `menu` step still renders `TitleScreen`. `intro-screen.tsx` remains in the repo and is not part of this flow.
 
 ```
-Intro video (first load only)
- └── Welcome
-      ├── Access as Guest  →  Title  →  Map  →  Galaxy Drift
-      ├── Sign In (userid check only)
-      │     → User data setup (draft)
-      │     → Information
-      │     → Consent → Create account  →  Title  →  Map
-      │                    │
-      │                    └── Decline (nothing saved) → Declined
-      └── Log In  →  Title  →  Map
+Play (full screen)
+ └── SCALA logo (1.5 s)
+      └── EU + UKRI logos (1.5 s)
+           └── Welcome
+                ├── Access as Guest  →  Menu
+                ├── Sign Up (userid check only)
+                │     → User data setup (draft)
+                │     → Information
+                │     → Consent → Create account  →  Menu
+                │                    │
+                │                    └── Decline (nothing saved) → Declined
+                └── Log In  →  Menu
 ```
 
-**Access as Guest** skips signup and the database and opens the title screen so you can try the map and Galaxy Drift. No participant row is created.
+**Access as Guest** skips signup and the database and opens the menu so you can try Galaxy Drift. No participant row is created.
 
-**Settings** on Title and Map opens the settings step with the saved profile. Saving returns to Title. **Exit → Back to the start** clears the logged-in user (memory and cookie) so Sign In cannot see the previous account.
+**Settings** on the menu opens the settings step with the saved profile. Saving returns to the menu. **Exit → Back to the start** clears the logged-in user (memory and cookie) and returns to Welcome, so Sign Up cannot see the previous account.
 
 Shared UI (not screens): `scene.tsx` (card / backdrop), `form-fields.tsx`, `language-picker.tsx`.
 
@@ -172,4 +175,4 @@ Config lives in `netlify.toml`. The site is a Next.js app (not a static export) 
 
 `pnpm run build:netlify` copies `game-buildV9-02/Build`, `TemplateData`, and `StreamingAssets` into `public/game-build` as real files (the git symlinks would 404 on the CDN), then runs `next build`.
 
-On the live site, use **Access as Guest**. Sign-in and trials are not persisted in memory mode. For a hosted database, use Option C (Supabase) instead of local Postgres.
+On the live site, use **Access as Guest**. Sign-up and trials are not persisted in memory mode. For a hosted database, use Option C (Supabase) instead of local Postgres.

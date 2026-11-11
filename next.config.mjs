@@ -19,6 +19,14 @@ const nextConfig = {
   // Route handlers persist to local Postgres, so this cannot be a static
   // `output: 'export'` app. `pnpm dev` / `pnpm start` run a Node server.
   serverExternalPackages: ['pg'],
+  devIndicators: false,
+  experimental: {
+    // The default dev cache was storing the Unity builds and 3D dumps
+    // (about 1 GB, and it kept growing). That made `pnpm dev` hang and
+    // pushed Cursor out of memory.
+    turbopackFileSystemCacheForDev: false,
+    turbopackMemoryLimit: 1024 * 1024 * 1024,
+  },
   typescript: {
     ignoreBuildErrors: true,
   },
