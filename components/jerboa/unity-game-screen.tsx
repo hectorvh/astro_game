@@ -2,12 +2,15 @@
 
 import { useCallback, useEffect, useRef } from 'react'
 import { useAudioPrefs } from '@/lib/jerboa/audio-prefs'
+import type { RunMode } from '@/lib/jerboa/levels'
 import { useSession } from '@/lib/jerboa/session-context'
 import { parseUnityMessage, type ShellToUnity, type UnityToShell } from '@/lib/jerboa/unity-messages'
 
 type UnityGameScreenProps = {
   src: string
   title: string
+  /** Mode the iframe was opened with. Practice runs never count as completed. */
+  mode: RunMode
 }
 
 type AstroBunnyDev = { completeLevel: (level?: number) => void }
@@ -19,7 +22,7 @@ declare global {
   }
 }
 
-export function UnityGameScreen({ src, title }: UnityGameScreenProps) {
+export function UnityGameScreen({ src, title, mode }: UnityGameScreenProps) {
   const { goTo, markLevelCompleted } = useSession()
   const { muted } = useAudioPrefs()
   const iframeRef = useRef<HTMLIFrameElement>(null)
@@ -55,6 +58,11 @@ export function UnityGameScreen({ src, title }: UnityGameScreenProps) {
       if (finishedRef.current) return
       finishedRef.current = true
       if (message.type === 'levelComplete') {
+        // Practice: no progress, no debrief video, straight back to the menu.
+        if (mode === 'practice') {
+          goTo('menu')
+          return
+        }
         markLevelCompleted(message.level)
         goTo(message.level === 1 ? 'outro' : 'menu')
         return

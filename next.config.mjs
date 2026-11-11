@@ -48,6 +48,20 @@ const nextConfig = {
 
     return [
       ...csp,
+      // Unity Brotli files (same rules as netlify.toml). Content-Encoding makes the
+      // browser decompress them; Unity's loader then sees plain data.
+      ...[
+        ['wasm', 'application/wasm'],
+        ['data', 'application/octet-stream'],
+        ['js', 'application/javascript'],
+      ].map(([ext, type]) => ({
+        source: `/game-build/Build/:file(.+\\.${ext}\\.br)`,
+        headers: [
+          { key: 'Content-Encoding', value: 'br' },
+          { key: 'Content-Type', value: type },
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+        ],
+      })),
       {
         source: '/game-build/:path*.wasm',
         headers: [

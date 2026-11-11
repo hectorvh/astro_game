@@ -39,6 +39,47 @@
   cursor: pointer;
 }
 
+.menu-practice {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  margin: 0 0 0 4px;
+  padding: 6px 14px;
+  border: 1px solid var(--hud-cyan-dim);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--hud-cyan);
+  font-family: var(--font-hud-mono), ui-monospace, Menlo, monospace;
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    color 0.2s,
+    border-color 0.2s,
+    background-color 0.2s;
+}
+
+.menu-practice svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+
+.menu-practice:hover,
+.menu-practice:focus-visible {
+  color: var(--hud-amber);
+  border-color: rgba(255, 145, 0, 0.7);
+  background: rgba(8, 14, 22, 0.48);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .menu-practice {
+    transition: none;
+  }
+}
+
 .menu-tag-copy {
   display: grid;
   gap: 2px;

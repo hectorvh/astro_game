@@ -25,7 +25,7 @@ Writes
         └── memory    → in-tab Map (lost on reload)
 ```
 
-Galaxy Drift is a Unity WebGL build under `game-buildV9-02/`. The Next app embeds it in an iframe at `/game-build/play.html?level=<1-4>&embed=1&muted=<0|1>`. The messages between the iframe and the app are defined in [docs/unity-shell-contract.md](docs/unity-shell-contract.md). Locally, `public/game-build/Build`, `TemplateData`, and `StreamingAssets` are symlinks into `game-buildV9-02/`. Netlify copies those trees as real files during `pnpm run build:netlify` so the `.wasm` / `.data` are published.
+Galaxy Drift is a Unity WebGL build under `game-buildV10/`. The Next app embeds it in an iframe at `/game-build/play.html?level=<1-4>&mode=<assessment|trial>&embed=1&muted=<0|1>`. The messages between the iframe and the app are defined in [docs/unity-shell-contract.md](docs/unity-shell-contract.md). Locally, `public/game-build/Build`, `TemplateData`, and `StreamingAssets` are symlinks into `game-buildV10/`. Unity exports the build uncompressed; after each new export run `node scripts/brotli-unity-build.mjs game-buildV10` to write the `.br` files that `play.html` loads (only those and `loader.js` are committed). They are served with `Content-Encoding: br` by `netlify.toml` and `next.config.mjs`. Both `pnpm dev` and `pnpm start` send those headers. `game-buildV9-02/` stays one release as a fallback.
 
 ### Layers
 
@@ -37,7 +37,7 @@ Galaxy Drift is a Unity WebGL build under `game-buildV9-02/`. The Next app embed
 | Backend switch | `lib/jerboa/backend.ts` | Reads `NEXT_PUBLIC_JERBOA_BACKEND`. |
 | HTTP API | `app/api/...` | Used in **postgres** mode. The browser never talks to Postgres. |
 | Database | `db/local.sql` | Users, languages, trials. Existing databases: `pnpm db:merge`. |
-| Mini-game | `game-buildV9-02/` + `public/game-build/play.html` | Unity WebGL (Galaxy Drift / Astro Bunny Runner). |
+| Mini-game | `game-buildV10/` + `public/game-build/play.html` | Unity WebGL (Galaxy Drift / Astro Bunny Runner). |
 
 **Postgres mode (local default):** Next.js route handlers use `pg` and Unix-socket peer auth. Identity is one httpOnly cookie (`jerboa_participant` = `users.id`). Passwords are stored as `scrypt` hashes, never in plaintext. A user row is written only when **Create account** succeeds at the end of sign-up.
 
@@ -73,6 +73,8 @@ Galaxy Drift is a Unity WebGL build under `game-buildV9-02/`. The Next app embed
 | `outro` | Mission debrief | `cutscene-screen.tsx` | `astro_bunny.mp4` after Level 1 is completed, then the menu. Skippable. |
 
 The step name `userdatasetup` and the file `details-screen.tsx` differ on purpose: the file still uses the older `DetailsScreen` export. Exiting a level from the pause menu returns to the menu without the video.
+
+**Practice** (the pill under **Launch mission**, or the P key) starts the selected level as a practice run (`mode=trial`). It is offered only for levels with `practice: true` in `lib/jerboa/levels.ts`, does not count as completed, and skips the debrief video. **Launch mission** always sends `mode=assessment`. To test locked levels in `pnpm dev`, set `NEXT_PUBLIC_UNLOCK_ALL_LEVELS=1` in `.env.local`; production builds ignore it.
 
 ```
 Play (full screen)
@@ -177,7 +179,7 @@ Config lives in `netlify.toml`. The site is a Next.js app (not a static export) 
 | Node | 22 (`NODE_VERSION` in `netlify.toml`) |
 | Backend | `NEXT_PUBLIC_JERBOA_BACKEND=memory` (build-time; guest play only) |
 
-`pnpm run build:netlify` copies `game-buildV9-02/Build`, `TemplateData`, and `StreamingAssets` into `public/game-build` as real files (the git symlinks would 404 on the CDN), then runs `next build`.
+`pnpm run build:netlify` copies `game-buildV10/Build`, `TemplateData`, and `StreamingAssets` into `public/game-build` as real files (the git symlinks would 404 on the CDN), then runs `next build`.
 
 On the live site, use **Access as Guest**. Sign-up and trials are not persisted in memory mode. For a hosted database, use Option C (Supabase) instead of local Postgres.
 

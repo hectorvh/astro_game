@@ -14,3 +14,12 @@ context.md
 
 # Unity WebGL builds: Burst debug symbols must never ship
 **/*_BurstDebugInformation_DoNotShip/
+
+# Unity debug symbols: never ship or commit
+*_BurstDebugInformation_DoNotShip/
+
+# Uncompressed Unity originals. Only the .br files (scripts/brotli-unity-build.mjs)
+# and the loader are committed and deployed.
+game-buildV10/Build/game-buildV10.data
+game-buildV10/Build/game-buildV10.wasm
+game-buildV10/Build/game-buildV10.framework.js

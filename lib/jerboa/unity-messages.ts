@@ -1,6 +1,8 @@
 // Message contract between the shell and the Unity iframe.
 // Full description: docs/unity-shell-contract.md. Keep both in sync with the Unity repo.
 
+import type { RunMode } from './levels'
+
 export const UNITY_PLAYER_PATH = '/game-build/play.html'
 
 /** Messages Unity (via play.html) posts to the shell. Never personal or research data. */
@@ -14,8 +16,20 @@ export type UnityToShell =
 /** Messages the shell posts into the iframe. */
 export type ShellToUnity = { type: 'setMuted'; muted: boolean }
 
-export function unityPlayerUrl(level: number, muted: boolean): string {
-  const params = new URLSearchParams({ level: String(level), embed: '1', muted: muted ? '1' : '0' })
+/** Unity's names for the run modes (BoxSpawner.GameMode). Always sent: without it
+ *  Unity falls back to Trial and would record every mission as practice. */
+const UNITY_MODE: Record<RunMode, 'assessment' | 'trial'> = {
+  mission: 'assessment',
+  practice: 'trial',
+}
+
+export function unityPlayerUrl(level: number, muted: boolean, mode: RunMode): string {
+  const params = new URLSearchParams({
+    level: String(level),
+    mode: UNITY_MODE[mode],
+    embed: '1',
+    muted: muted ? '1' : '0',
+  })
   return `${UNITY_PLAYER_PATH}?${params.toString()}`
 }
 

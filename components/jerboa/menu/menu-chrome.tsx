@@ -1,7 +1,7 @@
 'use client'
 
-import { Component, useEffect, useRef, useSyncExternalStore, type ReactNode, type RefObject } from 'react'
-import { Info, Maximize, Minimize, Settings, Volume2, VolumeX } from 'lucide-react'
+import { Component, Fragment, useEffect, useRef, useSyncExternalStore, type ReactNode, type RefObject } from 'react'
+import { Dumbbell, Info, Maximize, Minimize, Settings, Volume2, VolumeX } from 'lucide-react'
 import { BRAND } from '@/lib/jerboa/constants'
 import {
   canToggleFullscreen,
@@ -10,7 +10,7 @@ import {
   isFullscreen,
   subscribeFullscreen,
 } from '@/lib/jerboa/fullscreen'
-import { getLevelStatus, LEVELS, type LevelDef } from '@/lib/jerboa/levels'
+import { canPractice, getLevelStatus, LEVELS, type LevelDef } from '@/lib/jerboa/levels'
 
 const LOGOS = [
   { src: '/images/brand/SCALA_logo.png', alt: 'SCALA' },
@@ -18,21 +18,46 @@ const LOGOS = [
   { src: '/images/brand/UKRI_logo.png', alt: 'UK Research and Innovation' },
 ]
 
+function practiceLabel(level: LevelDef): string {
+  return `Practice level ${level.code}, ${level.title}`
+}
+
+/** Small secondary pill. Callers render it only when canPractice(level) is true. */
+function PracticeButton({ level, onPractice }: { level: LevelDef; onPractice: () => void }) {
+  return (
+    <button
+      type="button"
+      className="menu-practice hud-focus"
+      aria-label={practiceLabel(level)}
+      onClick={onPractice}
+    >
+      <Dumbbell aria-hidden="true" />
+      Practice
+    </button>
+  )
+}
+
 export function SelectionTag({
   level,
   shaking,
   onLaunch,
+  onPractice,
 }: {
   level: LevelDef
   shaking: boolean
   onLaunch: () => void
+  onPractice: () => void
 }) {
   const status = getLevelStatus(level.id)
   const label = status.unlocked
     ? `Launch level ${level.code}, ${level.title}`
     : `Level ${level.code}, ${level.title}, locked`
   return (
-    <div className={shaking ? 'menu-tag menu-shake' : 'menu-tag'}>
+    <div
+      role="group"
+      aria-label="Selected level"
+      className={shaking ? 'menu-tag menu-shake' : 'menu-tag'}
+    >
       <button type="button" className="menu-tag-btn hud-focus" aria-label={label} onClick={onLaunch}>
         <span className="menu-tag-copy">
           <span className="menu-tag-k">Current selection:</span>
@@ -51,6 +76,7 @@ export function SelectionTag({
           {level.code}
         </span>
       </button>
+      {canPractice(level) ? <PracticeButton level={level} onPractice={onPractice} /> : null}
     </div>
   )
 }
@@ -139,6 +165,10 @@ export function MenuPrompts({ mode }: { mode: 'auto' | 'touch' | 'kb' | 'pad' })
           <span className="hud-key">Enter</span>
           launch
         </span>
+        <span className="prompt-row">
+          <span className="hud-key">P</span>
+          practice
+        </span>
       </span>
       <span className="prompt-pad prompt-row">
         <span className="prompt-row">
@@ -158,7 +188,12 @@ export function MenuPrompts({ mode }: { mode: 'auto' | 'touch' | 'kb' | 'pad' })
   )
 }
 
-export function ScreenReaderLevels({ onChoose }: { onChoose: (index: number) => void }) {
+type LevelActions = {
+  onChoose: (index: number) => void
+  onPractice: (index: number) => void
+}
+
+export function ScreenReaderLevels({ onChoose, onPractice }: LevelActions) {
   return (
     <div className="menu-sr">
       {LEVELS.map((level, index) => {
@@ -167,22 +202,28 @@ export function ScreenReaderLevels({ onChoose }: { onChoose: (index: number) => 
           ? `Launch level ${level.code}, ${level.title}`
           : `Level ${level.code}, ${level.title}, locked`
         return (
-          <button
-            key={level.id}
-            type="button"
-            className="hud-focus"
-            aria-label={label}
-            onClick={() => onChoose(index)}
-          >
-            {level.code} {level.title}
-          </button>
+          <Fragment key={level.id}>
+            <button type="button" className="hud-focus" aria-label={label} onClick={() => onChoose(index)}>
+              {level.code} {level.title}
+            </button>
+            {canPractice(level) ? (
+              <button
+                type="button"
+                className="hud-focus"
+                aria-label={practiceLabel(level)}
+                onClick={() => onPractice(index)}
+              >
+                Practice {level.code}
+              </button>
+            ) : null}
+          </Fragment>
         )
       })}
     </div>
   )
 }
 
-export function LevelCards({ onChoose }: { onChoose: (index: number) => void }) {
+export function LevelCards({ onChoose, onPractice }: LevelActions) {
   return (
     <div className="absolute inset-0 z-[1] overflow-auto px-4 pt-20 pb-40">
       <div className="mx-auto grid w-full max-w-3xl grid-cols-2 gap-3">
@@ -192,24 +233,28 @@ export function LevelCards({ onChoose }: { onChoose: (index: number) => void }) 
             ? `Launch level ${level.code}, ${level.title}`
             : `Level ${level.code}, ${level.title}, locked`
           return (
-            <button
-              key={level.id}
-              type="button"
-              className="hud-card hud-focus text-left"
-              aria-label={label}
-              onClick={() => onChoose(index)}
-            >
-              <span className="hud-eyebrow">{level.code}</span>
-              <span className="mt-1 block font-hud-display text-xl text-hud-ink">{level.title}</span>
-              <span className="mt-2 block text-base leading-snug text-hud-ink">{level.character}</span>
-              <span className="mt-1 block text-base leading-snug text-hud-mute">{level.spatialFocus}</span>
-              <span
-                className="mt-3 block font-hud-mono text-[13px] tracking-[0.12em] uppercase"
-                style={{ color: status.unlocked ? 'var(--hud-amber)' : 'var(--hud-mute)' }}
+            <div key={level.id} className="hud-card flex flex-col items-start gap-2">
+              <button
+                type="button"
+                className="hud-focus w-full text-left"
+                aria-label={label}
+                onClick={() => onChoose(index)}
               >
-                {status.unlocked ? '▸ Launch mission' : 'Locked — coming soon'}
-              </span>
-            </button>
+                <span className="hud-eyebrow">{level.code}</span>
+                <span className="mt-1 block font-hud-display text-xl text-hud-ink">{level.title}</span>
+                <span className="mt-2 block text-base leading-snug text-hud-ink">{level.character}</span>
+                <span className="mt-1 block text-base leading-snug text-hud-mute">{level.spatialFocus}</span>
+                <span
+                  className="mt-3 block font-hud-mono text-[13px] tracking-[0.12em] uppercase"
+                  style={{ color: status.unlocked ? 'var(--hud-amber)' : 'var(--hud-mute)' }}
+                >
+                  {status.unlocked ? '▸ Launch mission' : 'Locked — coming soon'}
+                </span>
+              </button>
+              {canPractice(level) ? (
+                <PracticeButton level={level} onPractice={() => onPractice(index)} />
+              ) : null}
+            </div>
           )
         })}
       </div>

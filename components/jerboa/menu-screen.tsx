@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { playLatch, unlockAudio } from '@/lib/jerboa/audio'
 import { useAudioPrefs } from '@/lib/jerboa/audio-prefs'
 import { enterFullscreen } from '@/lib/jerboa/fullscreen'
-import { getLevelStatus, LEVELS } from '@/lib/jerboa/levels'
+import { canPractice, getLevelStatus, LEVELS } from '@/lib/jerboa/levels'
 import { useSession } from '@/lib/jerboa/session-context'
 import { createDial, levelUnlocked, mod, type MenuBridge } from './menu/dial-geometry'
 import { LevelDial } from './menu/level-dial'
@@ -155,11 +155,15 @@ export function MenuScreen() {
     window.setTimeout(() => setShaking(false), 420)
   }
 
-  const refuse = (target: number) => {
+  const refuse = (target: number, reason: 'locked' | 'no-practice' = 'locked') => {
     const level = LEVELS[mod(target, LEVELS.length)]
     playLatch(false)
     shake()
-    announce(`Level ${level.code} is not available yet`)
+    announce(
+      reason === 'locked'
+        ? `Level ${level.code} is not available yet`
+        : `Level ${level.code} has no practice run`,
+    )
   }
 
   const goToLevel = (target: number) => {
@@ -178,10 +182,12 @@ export function MenuScreen() {
   const handlers = useRef<{
     step: (dir: number) => void
     launch: () => void
+    practice: () => void
     goToLevel: (index: number) => void
   }>({
     step: () => {},
     launch: () => {},
+    practice: () => {},
     goToLevel: () => {},
   })
 
@@ -193,6 +199,29 @@ export function MenuScreen() {
     enterFullscreen()
     unlockAudio()
     startLevelRef.current(LEVELS[indexRef.current].id)
+  }
+
+  const practice = () => {
+    const index = indexRef.current
+    if (!levelUnlocked(index)) {
+      refuse(index)
+      return
+    }
+    if (!canPractice(LEVELS[index])) {
+      refuse(index, 'no-practice')
+      return
+    }
+    enterFullscreen()
+    unlockAudio()
+    startLevelRef.current(LEVELS[index].id, 'practice')
+  }
+
+  const choosePractice = (target: number) => {
+    goToLevel(target)
+    if (!canPractice(LEVELS[target])) return
+    enterFullscreen()
+    unlockAudio()
+    startLevelRef.current(LEVELS[target].id, 'practice')
   }
 
   const choose = (target: number) => {
@@ -217,7 +246,7 @@ export function MenuScreen() {
     bridge.release = release
     bridge.setInput = (next) => setInputMode(next)
     bridge.onContextLost = () => setCanvasKey((key) => key + 1)
-    handlers.current = { step, launch, goToLevel }
+    handlers.current = { step, launch, practice, goToLevel }
   })
 
   useEffect(() => {
@@ -253,6 +282,10 @@ export function MenuScreen() {
         if (target instanceof HTMLButtonElement) return
         setInputMode('kb')
         handlers.current.launch()
+        event.preventDefault()
+      } else if (key === 'p' || key === 'P') {
+        setInputMode('kb')
+        handlers.current.practice()
         event.preventDefault()
       }
     }
@@ -331,7 +364,7 @@ export function MenuScreen() {
         <StarField />
         {showDial ? (
           <DialBoundary
-            fallback={<LevelCards onChoose={choose} />}
+            fallback={<LevelCards onChoose={choose} onPractice={choosePractice} />}
             onReset={() => setCanvasKey((key) => key + 1)}
           >
             <LevelDial
@@ -344,7 +377,7 @@ export function MenuScreen() {
             />
           </DialBoundary>
         ) : (
-          <LevelCards onChoose={choose} />
+          <LevelCards onChoose={choose} onPractice={choosePractice} />
         )}
         {showDial && locked ? (
           <div
@@ -358,8 +391,8 @@ export function MenuScreen() {
             <span className="hud-tag">COMING SOON</span>
           </div>
         ) : null}
-        <ScreenReaderLevels onChoose={choose} />
-        <SelectionTag level={level} shaking={shaking} onLaunch={launch} />
+        <ScreenReaderLevels onChoose={choose} onPractice={choosePractice} />
+        <SelectionTag level={level} shaking={shaking} onLaunch={launch} onPractice={practice} />
         <MenuLinks
           muted={muted}
           infoRef={infoRef}

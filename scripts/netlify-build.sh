@@ -2,17 +2,23 @@
 # Prepare Unity WebGL files for Netlify, then run next build.
 #
 # public/game-build Build, TemplateData, and StreamingAssets are git symlinks
-# into game-buildV9-02/. Netlify publishes a copy of public/ without those
+# into game-buildV10/. Only the Brotli files (*.br) and the loader are in git;
+# create them after a new Unity export with:
+#   node scripts/brotli-unity-build.mjs game-buildV10
+#
+# TODO(2026-11-11): game-buildV9-02 stays one release as a fallback. After the
+# next release, delete it and the older build folders (game-buildV2 to V9). Netlify publishes a copy of public/ without those
 # repo-root folders, so those links would 404. On Netlify we replace them
 # with real copies.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 DEST_DRIFT="$ROOT/public/game-build"
-SRC_DRIFT="$ROOT/game-buildV9-02"
+SRC_DRIFT="$ROOT/game-buildV10"
 
-if [[ ! -f "$SRC_DRIFT/Build/game-buildV9-02.wasm" ]]; then
-  echo "Unity build missing at $SRC_DRIFT/Build/game-buildV9-02.wasm" >&2
+if [[ ! -f "$SRC_DRIFT/Build/game-buildV10.wasm.br" ]]; then
+  echo "Unity build missing at $SRC_DRIFT/Build/game-buildV10.wasm.br" >&2
+  echo "Run: node scripts/brotli-unity-build.mjs game-buildV10" >&2
   exit 1
 fi
 

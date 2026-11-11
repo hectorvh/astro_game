@@ -117,37 +117,6 @@
         }
       }
 
-      /* Invisible hit target aligned to the pause-menu Exit button. */
-      #pause-exit-hit {
-        position: absolute;
-        z-index: 25;
-        left: 50%;
-        top: 56.9%;
-        width: 78%;
-        height: 6.4%;
-        min-height: 2.75rem;
-        transform: translate(-50%, -50%);
-        margin: 0;
-        padding: 0;
-        border: 0;
-        background: transparent;
-        opacity: 0;
-        pointer-events: none;
-        -webkit-tap-highlight-color: transparent;
-      }
-      #pause-exit-hit.is-on {
-        pointer-events: auto;
-        cursor: pointer;
-      }
-      @media (orientation: landscape) {
-        #pause-exit-hit {
-          top: 61.3%;
-          width: 80%;
-          height: 8.8%;
-          min-height: 0;
-        }
-      }
-
     </style>
   </head>
   <body>
@@ -161,7 +130,6 @@
       </div>
       <div id="unity-warning"></div>
       <div id="unity-footer"></div>
-      <button type="button" id="pause-exit-hit" aria-label="Exit" tabindex="-1"></button>
       <div id="game-loading" role="status" aria-live="polite" aria-label="Loading Galaxy Drift">
         <p id="game-loading-kicker">Astro Bunny</p>
         <h1 id="game-loading-title">Galaxy Drift</h1>
@@ -181,9 +149,7 @@
       var fill = document.querySelector("#game-loading-fill");
       var pctLabel = document.querySelector("#game-loading-pct");
       var statusLabel = document.querySelector("#game-loading-status");
-      var pauseExitHit = document.querySelector("#pause-exit-hit");
       var unityInstance = null;
-      var pauseMenuOpen = false;
       // Unity Personal splash plays after createUnityInstance resolves (~2s).
       var SPLASH_MASK_MS = 2800;
       var KEY_HOLD_MS = 70;
@@ -234,11 +200,12 @@
       }
 
       /* Shell contract: docs/unity-shell-contract.md in the web repo.
-         Shell -> Unity: ?level=<1-4>&embed=1&muted=<0|1> and { type: "setMuted", muted }.
-         Unity -> shell: ready, levelComplete, exit (plus legacy astroBunnyExit).
+         Shell -> Unity: ?level=<1-4>&mode=<assessment|trial>&embed=1&muted=<0|1>
+         (Unity reads them from Application.absoluteURL) and { type: "setMuted", muted }.
+         Unity -> shell: levelComplete and exit(pause-menu) come straight from Unity
+         (ShellBridge.jslib). This page only sends "ready" and exit(quit).
          Never send personal or research data through these messages. */
       var shellParams = new URLSearchParams(location.search);
-      var shellLevel = parseInt(shellParams.get("level") || "1", 10) || 1;
       var shellMuted = shellParams.get("muted") === "1";
 
       function postToShell(message) {
@@ -255,6 +222,21 @@
         } catch (err) {}
       }
 
+      /* AudioManager lives in the game scene, which loads after createUnityInstance
+         resolves, so a SetMutedFromShell sent at "ready" is dropped ("SendMessage:
+         object AudioManager not found"). Re-send the muted state over the first
+         seconds. Unity starts unmuted, so this only runs while muted.
+         TODO(added 2026-11-11): remove once AudioManager reads muted=1 from
+         Application.absoluteURL in Awake (see docs/unity-shell-contract.md). */
+      var MUTE_RETRY_MS = [500, 1500, 3000, 5000, 8000, 12000];
+      function applyMutedWhenSceneLoads() {
+        MUTE_RETRY_MS.forEach(function (ms) {
+          window.setTimeout(function () {
+            if (shellMuted) setUnityMuted(true);
+          }, ms);
+        });
+      }
+
       window.addEventListener("message", function (event) {
         if (event.source !== window.parent || event.origin !== location.origin) return;
         var data = event.data;
@@ -263,67 +245,16 @@
         setUnityMuted(shellMuted);
       });
 
+      /* Only for Unity's Application.Quit path (see hookUnityExit). The pause-menu
+         Exit is posted by Unity itself. */
       var didRequestExit = false;
       function requestExitToMap(reason) {
         if (didRequestExit) return;
         didRequestExit = true;
-        postToShell({ type: "exit", reason: reason === "quit" ? "quit" : "pause-menu" });
-        // Legacy message for shells older than the contract. Remove after one release.
+        postToShell({ type: "exit", reason: reason });
+        // TODO(added 2026-11-11): legacy message for older shells. Remove it in the
+        // release after game-buildV10 ships.
         postToShell({ type: "astroBunnyExit" });
-      }
-
-      /* Unity calls this from a .jslib after its level-clear screen:
-         window.astroBunnyShell.levelComplete(level) */
-      var didCompleteLevel = false;
-      window.astroBunnyShell = {
-        level: shellLevel,
-        levelComplete: function (level) {
-          if (didCompleteLevel || didRequestExit) return;
-          didCompleteLevel = true;
-          postToShell({ type: "levelComplete", level: Number(level) || shellLevel });
-        },
-      };
-
-      function invokeUnityExit() {
-        if (!unityInstance || typeof unityInstance.SendMessage !== "function") return;
-        ["GameHUD", "PauseMenu"].forEach(function (objectName) {
-          ["OnExitClicked", "OnExit"].forEach(function (method) {
-            try {
-              unityInstance.SendMessage(objectName, method);
-            } catch (err) {}
-          });
-        });
-      }
-
-      function setPauseMenuOpen(open) {
-        pauseMenuOpen = !!open;
-        if (pauseExitHit) pauseExitHit.classList.toggle("is-on", pauseMenuOpen);
-      }
-
-      function togglePauseMenu() {
-        setPauseMenuOpen(!pauseMenuOpen);
-      }
-
-      function canvasPoint(event) {
-        var rect = canvas.getBoundingClientRect();
-        if (!rect.width || !rect.height) return null;
-        return {
-          x: (event.clientX - rect.left) / rect.width,
-          y: (event.clientY - rect.top) / rect.height,
-        };
-      }
-
-      function hitPauseButton(pt) {
-        /* Play/pause control is bottom-right, beside SCORE. */
-        return pt.x > 0.76 && pt.y > 0.83;
-      }
-
-      function hitContinueButton(pt) {
-        return pt.x > 0.12 && pt.x < 0.9 && pt.y > 0.39 && pt.y < 0.47;
-      }
-
-      function hitPauseCard(pt) {
-        return pt.x > 0.1 && pt.x < 0.9 && pt.y > 0.1 && pt.y < 0.82;
       }
 
       function hookUnityExit(instance) {
@@ -352,45 +283,6 @@
           if (module && module.shouldQuit) requestExitToMap("quit");
         }, 250);
       }
-
-      if (pauseExitHit) {
-        pauseExitHit.addEventListener("pointerdown", function (event) {
-          event.preventDefault();
-          event.stopPropagation();
-          invokeUnityExit();
-          requestExitToMap("pause-menu");
-        });
-      }
-
-      window.addEventListener(
-        "keydown",
-        function (event) {
-          if (event.key === "Escape" || event.code === "Escape" || event.key === "Pause") {
-            togglePauseMenu();
-          }
-        },
-        true,
-      );
-
-      canvas.addEventListener(
-        "pointerdown",
-        function (event) {
-          var pt = canvasPoint(event);
-          if (!pt) return;
-          if (hitPauseButton(pt)) {
-            togglePauseMenu();
-            return;
-          }
-          if (pauseMenuOpen && hitContinueButton(pt)) {
-            setPauseMenuOpen(false);
-            return;
-          }
-          if (pauseMenuOpen && !hitPauseCard(pt) && !hitPauseButton(pt)) {
-            setPauseMenuOpen(false);
-          }
-        },
-        true,
-      );
 
       function hideOverlay() {
         overlay.classList.add("is-done");
@@ -513,12 +405,12 @@
       }
 
       var buildUrl = "Build";
-      var loaderUrl = buildUrl + "/game-buildV9-02.loader.js";
+      var loaderUrl = buildUrl + "/game-buildV10.loader.js";
       var config = {
         arguments: [],
-        dataUrl: buildUrl + "/game-buildV9-02.data",
-        frameworkUrl: buildUrl + "/game-buildV9-02.framework.js",
-        codeUrl: buildUrl + "/game-buildV9-02.wasm",
+        dataUrl: buildUrl + "/game-buildV10.data.br",
+        frameworkUrl: buildUrl + "/game-buildV10.framework.js.br",
+        codeUrl: buildUrl + "/game-buildV10.wasm.br",
         streamingAssetsUrl: "StreamingAssets",
         companyName: "DefaultCompany",
         productName: "Astro Bunny",
@@ -541,6 +433,7 @@
           hookUnityExit(instance);
           postToShell({ type: "ready" });
           if (shellMuted) setUnityMuted(true);
+          applyMutedWhenSceneLoads();
           setProgress(1);
           statusLabel.textContent = "Starting Galaxy Drift…";
           setTimeout(hideOverlay, SPLASH_MASK_MS);

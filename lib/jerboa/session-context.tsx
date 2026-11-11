@@ -15,6 +15,7 @@ import type { ParticipantRecord } from './types'
 import { CONSENT_VERSION } from './constants'
 import { ensureAnonymousSession, startFreshAnonymousSession } from './auth'
 import { createAccount, logIn, saveParticipant, signUp } from './data-access'
+import type { RunMode } from './levels'
 
 export type Step =
   | 'start'
@@ -71,7 +72,9 @@ interface SessionContextValue {
   resetSession: () => void
   /** Level id (1-4) passed to Unity; null until a level is launched. */
   currentLevel: number | null
-  startLevel: (id: number) => void
+  /** Run mode of the level being played: 'mission' (assessed) or 'practice'. */
+  currentMode: RunMode
+  startLevel: (id: number, mode?: RunMode) => void
   /** Levels finished this visit. Memory only. */
   completedLevels: number[]
   markLevelCompleted: (id: number) => void
@@ -107,6 +110,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null)
   const [authStatus, setAuthStatus] = useState<AuthStatus>('pending')
   const [currentLevel, setCurrentLevel] = useState<number | null>(null)
+  const [currentMode, setCurrentMode] = useState<RunMode>('mission')
   // TODO: persist per participant via the backend (data-access). Research
   // progress must not go to localStorage.
   const [completedLevels, setCompletedLevels] = useState<number[]>([])
@@ -286,6 +290,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     setConsentGiven(false)
     setIsGuest(false)
     setCurrentLevel(null)
+    setCurrentMode('mission')
     setCompletedLevels([])
     setAuthStatus('pending')
     goTo('welcome')
@@ -298,8 +303,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   }, [goTo])
 
   const startLevel = useCallback(
-    (id: number) => {
+    (id: number, mode: RunMode = 'mission') => {
       setCurrentLevel(id)
+      setCurrentMode(mode)
       goTo('minigame1')
     },
     [goTo],
@@ -331,6 +337,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       submitConsent,
       resetSession,
       currentLevel,
+      currentMode,
       startLevel,
       completedLevels,
       markLevelCompleted,
@@ -356,6 +363,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       submitConsent,
       resetSession,
       currentLevel,
+      currentMode,
       startLevel,
       completedLevels,
       markLevelCompleted,
