@@ -54,7 +54,7 @@ const nextConfig = {
       ...[
         ['wasm', 'application/wasm'],
         ['data', 'application/octet-stream'],
-        ['js', 'application/javascript'],
+        ['framework\\.js', 'application/javascript'],
       ].map(([ext, type]) => ({
         source: `/game-build/Build/:file(.+\\.${ext}\\.br)`,
         headers: [

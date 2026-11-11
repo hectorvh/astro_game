@@ -25,7 +25,7 @@ Writes
         └── memory    → in-tab Map (lost on reload)
 ```
 
-Galaxy Drift is a Unity WebGL build under `game-buildV10/`. The Next app embeds it in an iframe at `/game-build/play.html?level=<1-4>&mode=<assessment|trial>&embed=1&muted=<0|1>`. The messages between the iframe and the app are defined in [docs/unity-shell-contract.md](docs/unity-shell-contract.md). Locally, `public/game-build/Build`, `TemplateData`, and `StreamingAssets` are symlinks into `game-buildV10/`. Unity exports the build uncompressed; after each new export run `node scripts/brotli-unity-build.mjs game-buildV10` to write the `.br` files that `play.html` loads (only those and `loader.js` are committed). They are served with `Content-Encoding: br` by `netlify.toml` and `next.config.mjs`. Both `pnpm dev` and `pnpm start` send those headers. `game-buildV9-02/` stays one release as a fallback.
+Galaxy Drift is a Unity WebGL build under `game-buildV11/`. The Next app embeds it in an iframe at `/game-build/play.html?level=<1-4>&mode=<assessment|trial>&embed=1&muted=<0|1>&fs=<0|1>`. The messages between the iframe and the app are defined in [docs/unity-shell-contract.md](docs/unity-shell-contract.md). Locally, `public/game-build/Build`, `TemplateData`, and `StreamingAssets` are symlinks into `game-buildV11/`. `play.html` loads the Brotli files (`.data.br`, `.wasm.br`, `.framework.js.br`) plus the uncompressed `loader.js`; only those are committed. If a Unity export already contains `.br` files (Compression Format: Brotli), use them as they are. If it is uncompressed (as V10 and V11 were), run `node scripts/brotli-unity-build.mjs game-buildVNN` once to write them. The header rules in `netlify.toml` and `next.config.mjs` match any build name (`/game-build/Build/*.wasm.br`, `*.data.br`, `*.framework.js.br`) and send `Content-Encoding: br` with the right type; `pnpm dev` and `pnpm start` both apply them. A new build only needs the symlinks, the four file names in `play.html` and the folder name in `scripts/netlify-build.sh`. `game-buildV10/` stays until V11 is verified on a phone.
 
 ### Layers
 
@@ -37,7 +37,7 @@ Galaxy Drift is a Unity WebGL build under `game-buildV10/`. The Next app embeds 
 | Backend switch | `lib/jerboa/backend.ts` | Reads `NEXT_PUBLIC_JERBOA_BACKEND`. |
 | HTTP API | `app/api/...` | Used in **postgres** mode. The browser never talks to Postgres. |
 | Database | `db/local.sql` | Users, languages, trials. Existing databases: `pnpm db:merge`. |
-| Mini-game | `game-buildV10/` + `public/game-build/play.html` | Unity WebGL (Galaxy Drift / Astro Bunny Runner). |
+| Mini-game | `game-buildV11/` + `public/game-build/play.html` | Unity WebGL (Galaxy Drift / Astro Bunny Runner). |
 
 **Postgres mode (local default):** Next.js route handlers use `pg` and Unix-socket peer auth. Identity is one httpOnly cookie (`jerboa_participant` = `users.id`). Passwords are stored as `scrypt` hashes, never in plaintext. A user row is written only when **Create account** succeeds at the end of sign-up.
 
@@ -179,7 +179,7 @@ Config lives in `netlify.toml`. The site is a Next.js app (not a static export) 
 | Node | 22 (`NODE_VERSION` in `netlify.toml`) |
 | Backend | `NEXT_PUBLIC_JERBOA_BACKEND=memory` (build-time; guest play only) |
 
-`pnpm run build:netlify` copies `game-buildV10/Build`, `TemplateData`, and `StreamingAssets` into `public/game-build` as real files (the git symlinks would 404 on the CDN), then runs `next build`.
+`pnpm run build:netlify` copies `game-buildV11/Build`, `TemplateData`, and `StreamingAssets` into `public/game-build` as real files (the git symlinks would 404 on the CDN), then runs `next build`.
 
 On the live site, use **Access as Guest**. Sign-up and trials are not persisted in memory mode. For a hosted database, use Option C (Supabase) instead of local Postgres.
 

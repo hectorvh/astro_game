@@ -15,30 +15,30 @@
     # 'unsafe-eval' is required by the Unity WebGL loader (Emscripten).
     Content-Security-Policy = "default-src 'self' blob:; script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval' 'unsafe-inline' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' blob: data: https: wss:; worker-src 'self' blob:; child-src 'self' blob:; frame-src 'self' blob:; media-src 'self' blob:; frame-ancestors 'self'; upgrade-insecure-requests"
 
-# Unity Brotli files. Exact paths (Netlify's * is a trailing splat), so update
-# these names with each new build. Content-Encoding lets the browser decompress.
+# Unity Brotli files, for any build name. Netlify allows * anywhere inside a path
+# segment. Content-Encoding lets the browser decompress before Unity's loader.
 [[headers]]
-  for = "/game-build/Build/game-buildV10.wasm.br"
+  for = "/game-build/Build/*.wasm.br"
   [headers.values]
     Content-Encoding = "br"
     Content-Type = "application/wasm"
     Cache-Control = "public, max-age=31536000, immutable"
 
 [[headers]]
-  for = "/game-build/Build/game-buildV10.data.br"
+  for = "/game-build/Build/*.data.br"
   [headers.values]
     Content-Encoding = "br"
     Content-Type = "application/octet-stream"
     Cache-Control = "public, max-age=31536000, immutable"
 
 [[headers]]
-  for = "/game-build/Build/game-buildV10.framework.js.br"
+  for = "/game-build/Build/*.framework.js.br"
   [headers.values]
     Content-Encoding = "br"
     Content-Type = "application/javascript"
     Cache-Control = "public, max-age=31536000, immutable"
 
-# Uncompressed builds (game-buildV9-02 fallback).
+# Uncompressed Unity files (exports without Brotli).
 [[headers]]
   for = "/game-build/Build/*.wasm"
   [headers.values]

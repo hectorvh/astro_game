@@ -81,7 +81,7 @@ right because it follows `fullscreenChanged`, not its own click.
 `levelComplete` and `exit(pause-menu)` have exactly one path:
 Unity C# → `ShellBridge.jslib` → `window.parent.postMessage(…, location.origin)`.
 `play.html` does not relay, rewrite or duplicate them. The plugin as compiled
-into game-buildV10:
+into game-buildV10 and game-buildV11:
 
 ```js
 // Assets/Plugins/WebGL/ShellBridge.jslib
@@ -160,9 +160,9 @@ its Full screen icon (enter vs exit).
 
 ## 4. Build files and headers
 
-The shell loads `game-buildV10` through the symlinks in `public/game-build/`
+The shell loads `game-buildV11` through the symlinks in `public/game-build/`
 (`Build`, `TemplateData`, `StreamingAssets`). Unity exported it uncompressed;
-`node scripts/brotli-unity-build.mjs game-buildV10` writes the `.br` copies that
+`node scripts/brotli-unity-build.mjs game-buildV11` writes the `.br` copies that
 `play.html` loads. Only the `.br` files and `loader.js` are in git.
 
 The `.br` files must be served with `Content-Encoding: br` and their real type
