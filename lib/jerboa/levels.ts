@@ -20,7 +20,6 @@ export const LEVELS: LevelDef[] = [
     spatialFocus: 'Containment, support and path motion',
     unlocked: true,
     planet: { surface: '#E09952', bands: '#8C4A26', atmosphere: '#FFB86B', ring: true },
-    model: '/3d/AstroBunny.menu.glb',
   },
   {
     id: 2,

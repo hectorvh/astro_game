@@ -19,6 +19,7 @@ import {
   RingGeometry,
   SRGBColorSpace,
   Vector2,
+  Vector3,
 } from 'three'
 import { getLevelStatus, LEVELS, type LevelDef } from '@/lib/jerboa/levels'
 import {
@@ -40,6 +41,34 @@ const _amber = new Color('#FF9100')
 const _cyan = new Color('#9fe9ff')
 const _plateIdle = new Color('#123044')
 const _raycaster = new Raycaster()
+const _anchor = new Vector3()
+const _up = new Vector3()
+
+// Atmosphere shell radius: the visible top edge of the planet.
+const PLANET_TOP = 1.18
+// Label bottom limits: below the top edge, and below the top-right button
+// group (3 x 48 px + gaps, see .menu-links) when the label is under it.
+const LABEL_MIN_Y = 36
+const LABEL_MIN_Y_UNDER_BUTTONS = 92
+const BUTTONS_SPAN = 200
+
+/** Pins the "COMING SOON" label just above the planet's on-screen silhouette,
+ *  so it follows the camera fit in every orientation and never sits on the dial. */
+function ComingSoonAnchor({ bridgeRef }: { bridgeRef: RefObject<MenuBridge> }) {
+  useFrame(({ camera, size }) => {
+    const el = bridgeRef.current?.comingSoon
+    if (!el) return
+    _up.setFromMatrixColumn(camera.matrixWorld, 1).multiplyScalar(PLANET_TOP)
+    _anchor.set(0, CORE_Y, 0).add(_up).project(camera)
+    const x = (_anchor.x * 0.5 + 0.5) * size.width
+    const underButtons = x + el.offsetWidth / 2 > size.width - BUTTONS_SPAN
+    const minY = underButtons ? LABEL_MIN_Y_UNDER_BUTTONS : LABEL_MIN_Y
+    const y = Math.max(minY, (-_anchor.y * 0.5 + 0.5) * size.height - 10)
+    el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) translate(-50%, -100%)`
+    el.style.visibility = 'visible'
+  })
+  return null
+}
 
 const CANVAS_GL = { alpha: true, antialias: true, powerPreference: 'high-performance' as const }
 const CANVAS_CAMERA = {
@@ -450,6 +479,7 @@ function Scene({
       <Reticles />
       <DialRig dialRef={dialRef} bridgeRef={bridgeRef} />
       <Core level={level} reduce={reduce} />
+      <ComingSoonAnchor bridgeRef={bridgeRef} />
     </>
   )
 }

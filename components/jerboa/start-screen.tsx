@@ -26,7 +26,10 @@ export function StartScreen() {
   const showIosHint = useSyncExternalStore(subscribeIosHint, readIosHint, serverIosHint)
 
   useEffect(() => {
-    for (const src of SPLASH_LOGO_SRCS) {
+    // Same choice as `.space-bg` in globals.css, so the CSS reuses this download.
+    const wide = window.innerWidth >= 1700 || window.devicePixelRatio > 1
+    const backdrop = wide ? '/images/bg/space-2560.webp' : '/images/bg/space-1600.webp'
+    for (const src of [backdrop, ...SPLASH_LOGO_SRCS]) {
       const image = new Image()
       image.src = src
     }
@@ -42,8 +45,7 @@ export function StartScreen() {
 
   return (
     <main
-      className="relative flex min-h-dvh w-full flex-col items-center justify-center bg-[#0A0E14] bg-cover bg-center px-6"
-      style={{ backgroundImage: "url('/images/Gemini_Generated_Image_gjhy10gjhy10gjhy.jpeg')" }}
+      className="space-bg relative flex min-h-dvh w-full flex-col items-center justify-center px-6"
     >
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-background/35" />
       <button

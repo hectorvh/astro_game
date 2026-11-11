@@ -16,7 +16,7 @@ Browser
               │     step, participant, login / signup / guest / save / consent
               └── CurrentScreen
                     start | splash-scala | splash-funders | welcome | signin | login |
-                    userdatasetup | settings | information | consent | declined | menu | minigame1
+                    userdatasetup | settings | information | consent | declined | menu | minigame1 | outro
 
 Writes
   └── lib/jerboa/data-access.ts     ← stable interface
@@ -25,7 +25,7 @@ Writes
         └── memory    → in-tab Map (lost on reload)
 ```
 
-Galaxy Drift is a Unity WebGL build under `game-buildV9-02/`. The Next app embeds it in an iframe at `/game-build/play.html`. Locally, `public/game-build/Build`, `TemplateData`, and `StreamingAssets` are symlinks into `game-buildV9-02/`. Netlify copies those trees as real files during `pnpm run build:netlify` so the `.wasm` / `.data` are published.
+Galaxy Drift is a Unity WebGL build under `game-buildV9-02/`. The Next app embeds it in an iframe at `/game-build/play.html?level=<1-4>&embed=1&muted=<0|1>`. The messages between the iframe and the app are defined in [docs/unity-shell-contract.md](docs/unity-shell-contract.md). Locally, `public/game-build/Build`, `TemplateData`, and `StreamingAssets` are symlinks into `game-buildV9-02/`. Netlify copies those trees as real files during `pnpm run build:netlify` so the `.wasm` / `.data` are published.
 
 ### Layers
 
@@ -68,10 +68,11 @@ Galaxy Drift is a Unity WebGL build under `game-buildV9-02/`. The Next app embed
 | `information` | Participant Information | `information-screen.tsx` | Study explanation (placeholder copy). |
 | `consent` | Ethical Information & Consent | `consent-screen.tsx` | Tick-box gate, then **Create account** (writes the `users` row, including consent). Decline writes nothing. |
 | `declined` | Thank you for your time | `declined-screen.tsx` | Terminal state after Decline. |
-| `menu` | Home menu | `title-screen.tsx` | Play, Settings, About, Exit. Still the previous home screen. |
-| `minigame1` | Galaxy Drift | `minigame-one-screen.tsx` | Unity WebGL embed. Arrow keys / A·D to change lane; Space to fire. |
+| `menu` | Level menu | `menu-screen.tsx` | Rotary dial with the 4 levels (only Level 1 launches), Information, Settings, Mute. |
+| `minigame1` | Galaxy Drift | `minigame-one-screen.tsx` | Unity WebGL embed for the chosen level. Arrow keys / A·D to change lane; Space to fire. |
+| `outro` | Mission debrief | `cutscene-screen.tsx` | `astro_bunny.mp4` after Level 1 is completed, then the menu. Skippable. |
 
-The step name `userdatasetup` and the file `details-screen.tsx` differ on purpose: the file still uses the older `DetailsScreen` export. The `menu` step still renders `TitleScreen`. `intro-screen.tsx` remains in the repo and is not part of this flow.
+The step name `userdatasetup` and the file `details-screen.tsx` differ on purpose: the file still uses the older `DetailsScreen` export. Exiting a level from the pause menu returns to the menu without the video.
 
 ```
 Play (full screen)
@@ -86,11 +87,14 @@ Play (full screen)
                 │                    │
                 │                    └── Decline (nothing saved) → Declined
                 └── Log In  →  Menu
+
+Menu → Level 1 → levelComplete → debrief video → Menu
+            └── Pause → Exit  →  Menu
 ```
 
 **Access as Guest** skips signup and the database and opens the menu so you can try Galaxy Drift. No participant row is created.
 
-**Settings** on the menu opens the settings step with the saved profile. Saving returns to the menu. **Exit → Back to the start** clears the logged-in user (memory and cookie) and returns to Welcome, so Sign Up cannot see the previous account.
+**Settings** on the menu opens the settings step with the saved profile. Saving returns to the menu. **Log out** (or **Leave guest mode**) at the bottom of Settings clears the logged-in user (memory and cookie) and returns to Welcome, so Sign Up cannot see the previous account.
 
 Shared UI (not screens): `scene.tsx` (card / backdrop), `form-fields.tsx`, `language-picker.tsx`.
 

@@ -75,14 +75,14 @@ interface UserRow {
 /**
  * INSERT on first save, UPDATE on subsequent saves (spec §3, 1.2.C).
  *
- * `existingId` is part of the original interface but is deliberately not sent.
+ * `_existingId` is part of the original interface but is deliberately not sent.
  * The database decides which row this is by reading auth.uid() from the JWT, so
  * a client cannot nominate which participant it writes to — the insert-vs-update
  * branch lives inside save_participant.
  */
 export async function saveParticipant(
   values: OnboardingValues,
-  existingId?: string,
+  _existingId?: string,
 ): Promise<ParticipantRecord> {
   const supabase = getSupabaseBrowser()
 

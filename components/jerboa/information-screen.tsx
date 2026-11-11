@@ -1,6 +1,6 @@
 'use client'
 
-import { ArrowLeft, ArrowRight, ScrollText } from 'lucide-react'
+import { ArrowLeft, ScrollText } from 'lucide-react'
 import { useSession } from '@/lib/jerboa/session-context'
 import { Panel } from './scene'
 

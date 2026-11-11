@@ -1,18 +1,67 @@
 'use client'
 
 import { useCallback, useEffect, useRef } from 'react'
+import { useAudioPrefs } from '@/lib/jerboa/audio-prefs'
 import { useSession } from '@/lib/jerboa/session-context'
+import { parseUnityMessage, type ShellToUnity, type UnityToShell } from '@/lib/jerboa/unity-messages'
 
 type UnityGameScreenProps = {
   src: string
   title: string
 }
 
-const EXIT_MESSAGE = 'astroBunnyExit'
+type AstroBunnyDev = { completeLevel: (level?: number) => void }
+
+declare global {
+  interface Window {
+    /** Development only: simulates messages from Unity. */
+    __astroBunnyDev?: AstroBunnyDev
+  }
+}
 
 export function UnityGameScreen({ src, title }: UnityGameScreenProps) {
-  const { goTo } = useSession()
+  const { goTo, markLevelCompleted } = useSession()
+  const { muted } = useAudioPrefs()
   const iframeRef = useRef<HTMLIFrameElement>(null)
+  const mutedRef = useRef(muted)
+  const sentMutedRef = useRef(muted)
+  // Only the first levelComplete / exit per mount navigates.
+  const finishedRef = useRef(false)
+  const handleRef = useRef<(message: UnityToShell) => void>(() => {})
+
+  const postToUnity = useCallback((message: ShellToUnity) => {
+    try {
+      iframeRef.current?.contentWindow?.postMessage(message, window.location.origin)
+    } catch {
+      // The frame may be navigating; the next change or 'ready' resends.
+    }
+  }, [])
+
+  useEffect(() => {
+    mutedRef.current = muted
+    if (sentMutedRef.current === muted) return
+    sentMutedRef.current = muted
+    postToUnity({ type: 'setMuted', muted })
+  }, [muted, postToUnity])
+
+  useEffect(() => {
+    handleRef.current = (message) => {
+      if (message.type === 'ready') {
+        // A mute toggled while Unity was loading never reached it; resend the current state.
+        sentMutedRef.current = mutedRef.current
+        postToUnity({ type: 'setMuted', muted: mutedRef.current })
+        return
+      }
+      if (finishedRef.current) return
+      finishedRef.current = true
+      if (message.type === 'levelComplete') {
+        markLevelCompleted(message.level)
+        goTo(message.level === 1 ? 'outro' : 'menu')
+        return
+      }
+      goTo('menu')
+    }
+  })
 
   const focusGame = useCallback(() => {
     const frame = iframeRef.current
@@ -29,13 +78,24 @@ export function UnityGameScreen({ src, title }: UnityGameScreenProps) {
   useEffect(() => {
     function onMessage(event: MessageEvent) {
       if (event.source !== iframeRef.current?.contentWindow) return
-      if (event.data?.type !== EXIT_MESSAGE) return
-      goTo('menu')
+      if (event.origin !== window.location.origin) return
+      const message = parseUnityMessage(event.data)
+      if (message) handleRef.current(message)
     }
 
     window.addEventListener('message', onMessage)
     return () => window.removeEventListener('message', onMessage)
-  }, [goTo])
+  }, [])
+
+  useEffect(() => {
+    if (process.env.NODE_ENV !== 'development') return
+    window.__astroBunnyDev = {
+      completeLevel: (level = 1) => handleRef.current({ type: 'levelComplete', level }),
+    }
+    return () => {
+      delete window.__astroBunnyDev
+    }
+  }, [])
 
   useEffect(() => {
     const frame = iframeRef.current

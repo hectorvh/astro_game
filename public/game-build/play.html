@@ -233,14 +233,56 @@
         pctLabel.textContent = pct + "%";
       }
 
-      var didRequestExit = false;
-      function requestExitToMap() {
-        if (didRequestExit) return;
-        didRequestExit = true;
+      /* Shell contract: docs/unity-shell-contract.md in the web repo.
+         Shell -> Unity: ?level=<1-4>&embed=1&muted=<0|1> and { type: "setMuted", muted }.
+         Unity -> shell: ready, levelComplete, exit (plus legacy astroBunnyExit).
+         Never send personal or research data through these messages. */
+      var shellParams = new URLSearchParams(location.search);
+      var shellLevel = parseInt(shellParams.get("level") || "1", 10) || 1;
+      var shellMuted = shellParams.get("muted") === "1";
+
+      function postToShell(message) {
+        if (window.parent === window) return;
         try {
-          window.parent.postMessage({ type: "astroBunnyExit" }, "*");
+          window.parent.postMessage(message, location.origin);
         } catch (err) {}
       }
+
+      function setUnityMuted(muted) {
+        if (!unityInstance || typeof unityInstance.SendMessage !== "function") return;
+        try {
+          unityInstance.SendMessage("AudioManager", "SetMutedFromShell", muted ? "1" : "0");
+        } catch (err) {}
+      }
+
+      window.addEventListener("message", function (event) {
+        if (event.source !== window.parent || event.origin !== location.origin) return;
+        var data = event.data;
+        if (!data || data.type !== "setMuted") return;
+        shellMuted = !!data.muted;
+        setUnityMuted(shellMuted);
+      });
+
+      var didRequestExit = false;
+      function requestExitToMap(reason) {
+        if (didRequestExit) return;
+        didRequestExit = true;
+        postToShell({ type: "exit", reason: reason === "quit" ? "quit" : "pause-menu" });
+        // Legacy message for shells older than the contract. Remove after one release.
+        postToShell({ type: "astroBunnyExit" });
+      }
+
+      /* Unity calls this from a .jslib after its level-clear screen:
+         window.astroBunnyShell.levelComplete(level) */
+      var didCompleteLevel = false;
+      window.astroBunnyShell = {
+        level: shellLevel,
+        levelComplete: function (level) {
+          if (didCompleteLevel || didRequestExit) return;
+          didCompleteLevel = true;
+          postToShell({ type: "levelComplete", level: Number(level) || shellLevel });
+        },
+      };
 
       function invokeUnityExit() {
         if (!unityInstance || typeof unityInstance.SendMessage !== "function") return;
@@ -292,7 +334,7 @@
             try {
               if (typeof previousCleanup === "function") previousCleanup();
             } finally {
-              requestExitToMap();
+              requestExitToMap("quit");
             }
           };
         }
@@ -300,12 +342,14 @@
         var previousQuit = instance && instance.Quit;
         if (typeof previousQuit === "function") {
           instance.Quit = function () {
-            return Promise.resolve(previousQuit.call(instance)).finally(requestExitToMap);
+            return Promise.resolve(previousQuit.call(instance)).finally(function () {
+              requestExitToMap("quit");
+            });
           };
         }
 
         window.setInterval(function () {
-          if (module && module.shouldQuit) requestExitToMap();
+          if (module && module.shouldQuit) requestExitToMap("quit");
         }, 250);
       }
 
@@ -314,7 +358,7 @@
           event.preventDefault();
           event.stopPropagation();
           invokeUnityExit();
-          requestExitToMap();
+          requestExitToMap("pause-menu");
         });
       }
 
@@ -495,6 +539,8 @@
         }).then(function (instance) {
           unityInstance = instance;
           hookUnityExit(instance);
+          postToShell({ type: "ready" });
+          if (shellMuted) setUnityMuted(true);
           setProgress(1);
           statusLabel.textContent = "Starting Galaxy Drift…";
           setTimeout(hideOverlay, SPLASH_MASK_MS);

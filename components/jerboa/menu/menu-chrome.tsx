@@ -282,6 +282,7 @@ export function InfoPanel({
           </p>
           <div className="mt-5 flex items-center justify-center gap-4 rounded-2xl bg-white px-4 py-3">
             {LOGOS.map((logo) => (
+              // eslint-disable-next-line @next/next/no-img-element -- static brand logo, images.unoptimized
               <img key={logo.src} src={logo.src} alt={logo.alt} className="h-10 w-auto object-contain" />
             ))}
           </div>

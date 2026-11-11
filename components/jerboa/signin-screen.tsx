@@ -2,7 +2,7 @@
 
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { ArrowLeft, ArrowRight, KeyRound, UserRound } from 'lucide-react'
+import { ArrowLeft, KeyRound, UserRound } from 'lucide-react'
 import { credentialsSchema, type Credentials } from '@/lib/jerboa/schema'
 import { useSession } from '@/lib/jerboa/session-context'
 import { Panel } from './scene'

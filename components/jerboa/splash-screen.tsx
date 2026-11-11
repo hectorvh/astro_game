@@ -37,6 +37,31 @@ const SPLASH_CSS = `
   opacity: 0;
   animation: astro-splash-fade 1500ms linear both;
 }
+/* Padding shared by <main> and the size math below. */
+.astro-splash {
+  --splash-pad-top: max(24px, env(safe-area-inset-top));
+  --splash-pad-bottom: max(24px, env(safe-area-inset-bottom));
+  --splash-gap: 40px;
+  padding: var(--splash-pad-top) max(24px, env(safe-area-inset-right))
+    var(--splash-pad-bottom) max(24px, env(safe-area-inset-left));
+}
+@media (max-height: 499.98px) {
+  .astro-splash { --splash-gap: 16px; }
+}
+/* EU (768x808) above UKRI (768x226) at one shared width: total height is
+   width * (808 + 226) / 768 = width * 1.346, plus the gap. */
+.astro-splash-funders {
+  gap: var(--splash-gap);
+  width: min(
+    78vw,
+    440px,
+    (100dvh - var(--splash-pad-top) - var(--splash-pad-bottom) - var(--splash-gap)) / 1.346
+  );
+}
+.astro-splash-scala {
+  max-width: 80vw;
+  max-height: min(40dvh, 280px);
+}
 @media (prefers-reduced-motion: reduce) {
   main.astro-splash-fade {
     animation-name: none !important;
@@ -64,6 +89,7 @@ function SplashLogo({
       <p className="max-w-[80vw] text-center text-[20px] leading-snug text-white">{alt}</p>
     )
   }
+  // eslint-disable-next-line @next/next/no-img-element -- static brand logo, images.unoptimized
   return <img src={src} alt={alt} className={className} onError={() => onFail(src)} />
 }
 
@@ -88,26 +114,19 @@ export function SplashScreen({ variant }: { variant: 'scala' | 'funders' }) {
     <main
       key={variant}
       aria-label={label}
-      className="astro-splash-fade flex min-h-dvh w-full items-center justify-center bg-[#0A0E14] bg-cover bg-center"
-      style={{
-        backgroundImage: "url('/images/Gemini_Generated_Image_gjhy10gjhy10gjhy.jpeg')",
-        paddingTop: 'max(24px, env(safe-area-inset-top))',
-        paddingRight: 'max(24px, env(safe-area-inset-right))',
-        paddingBottom: 'max(24px, env(safe-area-inset-bottom))',
-        paddingLeft: 'max(24px, env(safe-area-inset-left))',
-      }}
+      className="astro-splash astro-splash-fade space-bg flex h-dvh w-full items-center justify-center overflow-hidden"
     >
       <style>{SPLASH_CSS}</style>
       {variant === 'scala' ? (
         <SplashLogo
           src={LOGOS.scala.src}
           alt={LOGOS.scala.alt}
-          className="max-h-[min(40vh,280px)] max-w-[80vw] object-contain"
+          className="astro-splash-scala h-auto w-auto object-contain"
           failed={!!failed[LOGOS.scala.src]}
           onFail={onFail}
         />
       ) : (
-        <div className="mx-auto flex w-[min(78vw,440px)] flex-col items-center gap-10">
+        <div className="astro-splash-funders mx-auto flex flex-col items-center">
           <SplashLogo
             src={LOGOS.eu.src}
             alt={LOGOS.eu.alt}

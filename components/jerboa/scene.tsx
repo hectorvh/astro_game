@@ -27,8 +27,7 @@ export function DecorGlyphs({ className = '' }: { className?: string }) {
 export function PanelStage({ children }: { children: ReactNode }) {
   return (
     <main
-      className="relative flex min-h-dvh w-full flex-col items-center justify-center overflow-hidden bg-[#0A0E14] bg-cover bg-center px-4 py-8 sm:py-12"
-      style={{ backgroundImage: "url('/images/Gemini_Generated_Image_gjhy10gjhy10gjhy.jpeg')" }}
+      className="relative flex min-h-dvh w-full flex-col items-center justify-center overflow-hidden px-4 py-8 sm:py-12 space-bg"
     >
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-background/45" />
       <DecorGlyphs />

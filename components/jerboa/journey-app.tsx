@@ -14,10 +14,11 @@ import { ConsentScreen } from './consent-screen'
 import { DeclinedScreen } from './declined-screen'
 import { MenuScreen } from './menu-screen'
 import { MinigameOneScreen } from './minigame-one-screen'
+import { CutsceneScreen } from './cutscene-screen'
 import { Bird3dScreen, Bunny3dScreen, Jerboa3dScreen } from './jerboa-3d-screen'
 
 function CurrentScreen() {
-  const { step, participant, credentials } = useSession()
+  const { step, participant, credentials, goTo } = useSession()
 
   switch (step) {
     case 'start':
@@ -78,6 +79,14 @@ function CurrentScreen() {
       return <MenuScreen />
     case 'minigame1':
       return <MinigameOneScreen />
+    case 'outro':
+      return (
+        <CutsceneScreen
+          src="/videos/astro_bunny.mp4"
+          label="Astro Bunny mission debrief"
+          onDone={() => goTo('menu')}
+        />
+      )
     case 'jerboa3d':
       return <Jerboa3dScreen />
     case 'bunny3d':

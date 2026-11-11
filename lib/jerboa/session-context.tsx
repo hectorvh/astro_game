@@ -29,6 +29,7 @@ export type Step =
   | 'consent'
   | 'menu'
   | 'minigame1'
+  | 'outro'
   | 'jerboa3d'
   | 'bunny3d'
   | 'bird3d'
@@ -68,6 +69,12 @@ interface SessionContextValue {
   submitSettings: (values: OnboardingValues) => Promise<void>
   submitConsent: (agreed: boolean) => Promise<void>
   resetSession: () => void
+  /** Level id (1-4) passed to Unity; null until a level is launched. */
+  currentLevel: number | null
+  startLevel: (id: number) => void
+  /** Levels finished this visit. Memory only. */
+  completedLevels: number[]
+  markLevelCompleted: (id: number) => void
 }
 
 function messageFor(cause: unknown): string {
@@ -99,6 +106,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [isGuest, setIsGuest] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [authStatus, setAuthStatus] = useState<AuthStatus>('pending')
+  const [currentLevel, setCurrentLevel] = useState<number | null>(null)
+  // TODO: persist per participant via the backend (data-access). Research
+  // progress must not go to localStorage.
+  const [completedLevels, setCompletedLevels] = useState<number[]>([])
 
   useEffect(() => {
     let cancelled = false
@@ -274,6 +285,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     setCredentials(null)
     setConsentGiven(false)
     setIsGuest(false)
+    setCurrentLevel(null)
+    setCompletedLevels([])
     setAuthStatus('pending')
     goTo('welcome')
     startFreshAnonymousSession()
@@ -283,6 +296,18 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         setError(messageFor(cause))
       })
   }, [goTo])
+
+  const startLevel = useCallback(
+    (id: number) => {
+      setCurrentLevel(id)
+      goTo('minigame1')
+    },
+    [goTo],
+  )
+
+  const markLevelCompleted = useCallback((id: number) => {
+    setCompletedLevels((prev) => (prev.includes(id) ? prev : [...prev, id]))
+  }, [])
 
   const value = useMemo<SessionContextValue>(
     () => ({
@@ -305,6 +330,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       submitSettings,
       submitConsent,
       resetSession,
+      currentLevel,
+      startLevel,
+      completedLevels,
+      markLevelCompleted,
     }),
     [
       step,
@@ -326,6 +355,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       submitSettings,
       submitConsent,
       resetSession,
+      currentLevel,
+      startLevel,
+      completedLevels,
+      markLevelCompleted,
     ],
   )
 

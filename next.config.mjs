@@ -27,9 +27,6 @@ const nextConfig = {
     turbopackFileSystemCacheForDev: false,
     turbopackMemoryLimit: 1024 * 1024 * 1024,
   },
-  typescript: {
-    ignoreBuildErrors: true,
-  },
   images: {
     unoptimized: true,
   },

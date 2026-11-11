@@ -26,8 +26,7 @@ export function Model3dScreen({
     <main className="relative flex h-dvh w-full items-center justify-center overflow-hidden">
       <div
         aria-hidden="true"
-        className="absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: "url('/images/Gemini_Generated_Image_gjhy10gjhy10gjhy.jpeg')" }}
+        className="space-bg absolute inset-0"
       />
       <div
         aria-hidden="true"

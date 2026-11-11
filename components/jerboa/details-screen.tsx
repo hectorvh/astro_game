@@ -1,11 +1,10 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Controller, useForm, type DefaultValues } from 'react-hook-form'
+import { Controller, useForm, useWatch, type DefaultValues } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
   ArrowLeft,
-  ArrowRight,
   CalendarRange,
   Globe,
   Languages,
@@ -68,7 +67,6 @@ export function DetailsScreen({ mode }: { mode: 'signup' | 'settings' }) {
     register,
     handleSubmit,
     control,
-    watch,
     formState: { errors, isSubmitting },
   } = useForm<OnboardingValues>({
     resolver: zodResolver(onboardingSchema),
@@ -76,7 +74,7 @@ export function DetailsScreen({ mode }: { mode: 'signup' | 'settings' }) {
     defaultValues: defaults as DefaultValues<OnboardingValues>,
   })
 
-  const gender = watch('gender')
+  const gender = useWatch({ control, name: 'gender' })
   const blocked = isSubmitting || authStatus !== 'ready'
 
   if (mode === 'settings' && (isGuest || !participant)) {

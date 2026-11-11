@@ -9,3 +9,5 @@ out/
 
 context.md
 .cursorignore
+# TypeScript incremental build info
+*.tsbuildinfo

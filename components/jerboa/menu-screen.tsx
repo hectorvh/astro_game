@@ -79,7 +79,7 @@ function selectedText(index: number): string {
 }
 
 export function MenuScreen() {
-  const { goTo } = useSession()
+  const { goTo, startLevel } = useSession()
   const { muted, toggleMuted } = useAudioPrefs()
   const reduce = useReducedMotion()
   const webgl = useWebGL()
@@ -106,6 +106,7 @@ export function MenuScreen() {
     setInput: () => {},
     poke: () => {},
     onContextLost: () => {},
+    comingSoon: null,
   })
 
   const announce = (message: string) => {
@@ -173,7 +174,7 @@ export function MenuScreen() {
     commit(Math.round(dialRef.current.target) + dir, 'strong')
   }
 
-  const goToRef = useRef(goTo)
+  const startLevelRef = useRef(startLevel)
   const handlers = useRef<{
     step: (dir: number) => void
     launch: () => void
@@ -191,7 +192,7 @@ export function MenuScreen() {
     }
     enterFullscreen()
     unlockAudio()
-    goToRef.current('minigame1')
+    startLevelRef.current(LEVELS[indexRef.current].id)
   }
 
   const choose = (target: number) => {
@@ -199,14 +200,14 @@ export function MenuScreen() {
     if (!levelUnlocked(target)) return
     enterFullscreen()
     unlockAudio()
-    goToRef.current('minigame1')
+    startLevelRef.current(LEVELS[target].id)
   }
 
   useEffect(() => {
     indexRef.current = index
     infoOpenRef.current = infoOpen
     reduceRef.current = reduce
-    goToRef.current = goTo
+    startLevelRef.current = startLevel
     const bridge = bridgeRef.current
     bridge.overlay = infoOpen
     bridge.reduce = reduce
@@ -324,8 +325,7 @@ export function MenuScreen() {
       <div ref={shellRef} className="absolute inset-0 z-[1]" inert={infoOpen ? true : undefined}>
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: "url('/images/Gemini_Generated_Image_gjhy10gjhy10gjhy.jpeg')" }}
+          className="space-bg pointer-events-none absolute inset-0"
         />
         <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[#0A0E14]/40" />
         <StarField />
@@ -346,8 +346,15 @@ export function MenuScreen() {
         ) : (
           <LevelCards onChoose={choose} />
         )}
-        {locked ? (
-          <div className="menu-coming-soon" aria-hidden="true">
+        {showDial && locked ? (
+          <div
+            ref={(el) => {
+              bridgeRef.current.comingSoon = el
+              if (el) bridgeRef.current.poke()
+            }}
+            className="menu-coming-soon"
+            aria-hidden="true"
+          >
             <span className="hud-tag">COMING SOON</span>
           </div>
         ) : null}

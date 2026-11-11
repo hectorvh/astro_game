@@ -60,6 +60,8 @@ export type MenuBridge = {
   setInput: (mode: 'touch' | 'kb' | 'pad') => void
   poke: () => void
   onContextLost: () => void
+  /** DOM label kept above the planet by the scene (see ComingSoonAnchor). */
+  comingSoon: HTMLElement | null
 }
 
 function sectorShape(r0: number, r1: number, a0: number, a1: number): Shape {

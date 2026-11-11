@@ -1,9 +1,10 @@
 .menu-coming-soon {
+  /* Placed by ComingSoonAnchor (level-dial.tsx) from the projected planet top. */
   position: absolute;
-  left: 50%;
-  top: 38%;
+  left: 0;
+  top: 0;
   z-index: 2;
-  transform: translate(-50%, -50%);
+  visibility: hidden;
   pointer-events: none;
   white-space: nowrap;
 }

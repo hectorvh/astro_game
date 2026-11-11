@@ -14,12 +14,10 @@ export function FieldLabel({
   htmlFor,
   icon,
   children,
-  hint,
 }: {
   htmlFor?: string
   icon?: ReactNode
   children: ReactNode
-  hint?: string
 }) {
   return (
     <label htmlFor={htmlFor} className="mb-2 flex items-center gap-2 text-base font-bold text-foreground">
